@@ -76,6 +76,7 @@ function setITranslatorTarget(target) {
     widget.flushBuffer();
     const select = widget.querySelector('[data-target-select]');
     if (select) select.value = target;
+    widget.updateModeIndicator();
   });
 }
 
@@ -94,7 +95,6 @@ function indicator() {
   if (!element) {
     element = document.createElement('div');
     element.id = 'itarea-mode-indicator';
-    element.textContent = 'iTranArea in English mode';
     element.hidden = true;
     document.body.append(element);
   }
@@ -147,6 +147,16 @@ class ITranslatorTextarea extends HTMLElement {
     this.style.setProperty('--itarea-font-family', `${cssFamily}, system-ui, sans-serif`);
   }
 
+  updateModeIndicator() {
+    const element = indicator();
+    element.textContent = this.mode === 'english'
+      ? 'No transliteration'
+      : this.mode === 'roman'
+        ? 'Roman'
+        : pageConfig.targets[pageTarget].label;
+    element.hidden = false;
+  }
+
   setMode(mode) {
     this.flushBuffer();
     this.mode = mode;
@@ -154,7 +164,7 @@ class ITranslatorTextarea extends HTMLElement {
     this.input.classList.toggle('itarea__english', mode === 'english');
     this.input.classList.toggle('itarea__roman', mode === 'roman');
     this.input.placeholder = mode === 'english' ? 'Type English' : 'Type Sanskrit with ITRANS';
-    indicator().hidden = mode !== 'english';
+    this.updateModeIndicator();
     this.input.focus();
   }
 
