@@ -2,6 +2,8 @@
 @font-face { font-family: "ITArea Noto Sans Devanagari"; src: url("./fonts/NotoSansDevanagari-Regular.ttf") format("truetype"); font-display: swap; }
 @font-face { font-family: "ITArea Noto Serif Devanagari"; src: url("./fonts/NotoSerifDevanagari-Regular.ttf") format("truetype"); font-display: swap; }
 @font-face { font-family: "ITArea Tiro Devanagari Sanskrit"; src: url("./fonts/TiroDevanagariSanskrit-Regular.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "ITArea Sanskrit 2003"; src: url("./fonts/Sanskrit-2003-Font.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "ITArea Chandas"; src: url("./fonts/Chandas_Font.ttf") format("truetype"); font-display: swap; }
 .itarea { position: relative; margin: 1rem 0; color: #29241c; font: 16px/1.5 system-ui, sans-serif; }
 .itarea label { font-weight: 700; }
 .itarea__bar { display: flex; gap: .4rem; margin: .65rem 0; }

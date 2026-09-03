@@ -7,6 +7,8 @@
       "noto-sans-devanagari": { "label": "Noto Sans Devanagari", "family": "ITArea Noto Sans Devanagari" },
       "noto-serif-devanagari": { "label": "Noto Serif Devanagari", "family": "ITArea Noto Serif Devanagari" },
       "tiro-devanagari-sanskrit": { "label": "Tiro Devanagari Sanskrit", "family": "ITArea Tiro Devanagari Sanskrit" },
+      "sanskrit-2003": { "label": "Sanskrit 2003", "family": "ITArea Sanskrit 2003" },
+      "chandas": { "label": "Chandas", "family": "ITArea Chandas" },
       "system": { "label": "System default", "family": "system-ui" }
     }
   },

@@ -43,7 +43,8 @@ file. Keep all three files together; the example assumes they are in
 
 The settings control in each widget includes a page-wide font selector. The
 starter package includes regular styles of Noto Sans Devanagari, Noto Serif
-Devanagari, and Tiro Devanagari Sanskrit, plus a System default choice. To set
+Devanagari, Tiro Devanagari Sanskrit, Sanskrit 2003, and Chandas, plus a System
+default choice. To set
 the selection from JavaScript, import and call `setITranslatorFont()`:
 
 ```js

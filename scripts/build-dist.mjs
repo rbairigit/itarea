@@ -15,9 +15,13 @@ const fontFiles = [
   'NotoSansDevanagari-Regular.ttf',
   'NotoSerifDevanagari-Regular.ttf',
   'TiroDevanagariSanskrit-Regular.ttf',
+  'Sanskrit-2003-Font.ttf',
+  'Chandas_Font.ttf',
   'OFL-Noto-Sans-Devanagari.txt',
   'OFL-Noto-Serif-Devanagari.txt',
   'OFL-Tiro-Devanagari-Sanskrit.txt',
+  'LICENSE-Sanskrit-2003.txt',
+  'LICENSE-Chandas-GPL-2.0.txt',
 ];
 
 await mkdir('dist/fonts', { recursive: true });
