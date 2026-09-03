@@ -158,10 +158,10 @@ class ITranslatorTextarea extends HTMLElement {
   }
 
   handleKeydown(event) {
-    if (event.ctrlKey && event.key.toLowerCase() === 's') {
+    if (event.ctrlKey && ['s', 'i'].includes(event.key.toLowerCase())) {
       event.preventDefault(); this.setMode('itrans'); return;
     }
-    if ((event.ctrlKey && event.key.toLowerCase() === 'e') || event.key === 'Escape') {
+    if ((event.ctrlKey && ['e', 'o'].includes(event.key.toLowerCase())) || event.key === 'Escape') {
       event.preventDefault(); this.setMode('english'); return;
     }
     if (event.ctrlKey && event.key.toLowerCase() === 'r') {

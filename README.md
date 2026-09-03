@@ -64,7 +64,8 @@ exception because it embeds its configuration directly.
 - ITRANS input is replaced in place by the configured target script, so Sanskrit
   and English can be mixed in a single text area.
 - English mode leaves the input unchanged.
-- `Ctrl+S` selects iTrans mode. `Ctrl+E` or `Escape` selects English mode.
+- `Ctrl+S` or `Ctrl+I` selects iTrans mode. `Ctrl+E`, `Ctrl+O`, or `Escape`
+  selects English mode.
   English mode turns the input light grey and shows a floating mode indicator.
 - `Ctrl+R` selects Roman mode, which replaces ITRANS input with IAST, such as
   `kRtaj~naH` becoming `kṛtajñaḥ`.
