@@ -32,13 +32,15 @@
       "label": "Kannada",
       "script": "Kannada",
       "transform": "script-offset",
-      "offset": 896
+      "offset": 896,
+      "replacements": { "ॐ": "ॐ" }
     },
     "malayalam": {
       "label": "Malayalam",
       "script": "Malayalam",
       "transform": "script-offset",
-      "offset": 1024
+      "offset": 1024,
+      "replacements": { "ॐ": "ॐ" }
     },
     "tamil": {
       "label": "Tamil",
@@ -57,7 +59,7 @@
     "p": "प", "ph": "फ", "b": "ब", "bh": "भ", "m": "म",
     "y": "य", "r": "र", "l": "ल", "v": "व", "w": "व",
     "sh": "श", "Sh": "ष", "S": "ष", "s": "स", "h": "ह", "L": "ळ",
-    "M": "ं", ".m": "ं", ".n": "ं", "H": "ः", ".N": "ँ", ".h": "्", ".a": "ऽ", "OM": "ॐ", "AUM": "ॐ",
+    "M": "ं", ".m": "ं", ".n": "ं", "H": "ः", ".N": "अँ", ".h": "्", ".a": "ऽ", "OM": "ॐ", "AUM": "ॐ",
     "0": "०", "1": "१", "2": "२", "3": "३", "4": "४", "5": "५", "6": "६", "7": "७", "8": "८", "9": "९",
     "kSh": "क्ष", "kS": "क्ष", "kSh": "क्ष", "GYa": "ज्ञ", "j~na": "ज्ञ"
   },
