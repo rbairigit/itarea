@@ -1,7 +1,13 @@
 import { createTransliterator } from './itransliterator.js';
 
 let pageConfig;
-export function configureITranslator(config) { pageConfig = config; }
+let pageTarget;
+export function configureITranslator(config) { pageConfig = config; pageTarget = config.defaultTarget; }
+export function setITranslatorTarget(target) {
+  if (!pageConfig?.targets[target]) throw new Error(`Unsupported target: ${target}`);
+  pageTarget = target;
+  document.querySelectorAll('i-translator-textarea').forEach(widget => widget.flushBuffer());
+}
 
 function indicator() {
   let element = document.querySelector('#itarea-mode-indicator');
@@ -34,7 +40,7 @@ export class ITranslatorTextarea extends HTMLElement {
     this.input.addEventListener('blur', () => this.flushBuffer());
   }
 
-  get transliterate() { return createTransliterator(pageConfig, this.mode === 'roman' ? 'sanskrit-iast' : pageConfig.defaultTarget); }
+  get transliterate() { return createTransliterator(pageConfig, this.mode === 'roman' ? 'sanskrit-iast' : pageTarget); }
 
   setMode(mode) {
     this.flushBuffer();

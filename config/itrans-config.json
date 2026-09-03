@@ -9,6 +9,29 @@
     "sanskrit-iast": {
       "label": "Roman (IAST)",
       "script": "Latin"
+    },
+    "telugu": {
+      "label": "Telugu",
+      "script": "Telugu",
+      "transform": "script-offset",
+      "offset": 768
+    },
+    "kannada": {
+      "label": "Kannada",
+      "script": "Kannada",
+      "transform": "script-offset",
+      "offset": 896
+    },
+    "malayalam": {
+      "label": "Malayalam",
+      "script": "Malayalam",
+      "transform": "script-offset",
+      "offset": 1024
+    },
+    "tamil": {
+      "label": "Tamil",
+      "script": "Tamil",
+      "transform": "tamil"
     }
   },
   "tokens": {

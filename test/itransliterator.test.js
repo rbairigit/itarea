@@ -16,6 +16,12 @@ test('creates IAST from ITRANS input', () => {
   assert.equal(romanize('kRRitaj~naH'), 'kṛtajñaḥ');
   assert.equal(romanize('kR^itaj~naH'), 'kṛtajñaḥ');
 });
+test('creates supported southern Indic scripts', () => {
+  assert.equal(createTransliterator(config, 'telugu')('raamaH'), 'రామః');
+  assert.equal(createTransliterator(config, 'kannada')('raamaH'), 'ರಾಮಃ');
+  assert.equal(createTransliterator(config, 'malayalam')('raamaH'), 'രാമഃ');
+  assert.equal(createTransliterator(config, 'tamil')('raamaH'), 'ராமஃ');
+});
 test('forms basic consonant-vowel syllables', () => {
   assert.equal(transliterate('raama'), 'राम');
   assert.equal(transliterate('namaH|'), 'नमः।');

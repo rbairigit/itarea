@@ -21,9 +21,9 @@ is required.
   English mode turns the input light grey and shows a floating mode indicator.
 - `Ctrl+R` selects Roman mode, which replaces ITRANS input with IAST, such as
   `kRtaj~naH` becoming `kṛtajñaḥ`.
-- The page-level target menu is populated from the configuration. The initial
-  configuration contains Sanskrit/Devanagari; additional target scripts can be
-  added without changing widget markup.
+- Supported targets are Sanskrit/Devanagari (default), Telugu, Kannada, Tamil,
+  Malayalam, and Roman/IAST. The page-level target menu is populated from the
+  configuration.
 
 The initial transliterator covers common Sanskrit vowels, consonants, marks,
 virama, and punctuation. It is deliberately a foundation rather than a claim of
@@ -40,9 +40,10 @@ complete compatibility with every historical ITRANS extension.
 
 ```html
 <script type="module">
-  import { configureITranslator } from './src/itextarea.js';
+  import { configureITranslator, setITranslatorTarget } from './src/itextarea.js';
   const config = await fetch('./config/itrans-config.json').then(r => r.json());
   configureITranslator(config);
+  setITranslatorTarget('telugu'); // Or kannada, tamil, malayalam, etc.
 </script>
 
 <i-translator-textarea label="Sanskrit text"></i-translator-textarea>
