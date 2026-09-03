@@ -33,3 +33,8 @@ test('forms basic consonant-vowel syllables', () => {
   assert.equal(createTransliterator(config, 'kannada')('| ||'), '। ॥');
   assert.equal(createTransliterator(config, 'malayalam')('| ||'), '। ॥');
 });
+test('renders OM and AUM by target script', () => {
+  assert.equal(transliterate('OM AUM'), 'ॐ ॐ');
+  assert.equal(createTransliterator(config, 'telugu')('OM AUM'), 'ఓం ఓం');
+  assert.equal(createTransliterator(config, 'tamil')('OM AUM'), 'ௐ ௐ');
+});

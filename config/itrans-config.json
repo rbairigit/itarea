@@ -14,7 +14,8 @@
       "label": "Telugu",
       "script": "Telugu",
       "transform": "script-offset",
-      "offset": 768
+      "offset": 768,
+      "replacements": { "ॐ": "ఓం" }
     },
     "kannada": {
       "label": "Kannada",
