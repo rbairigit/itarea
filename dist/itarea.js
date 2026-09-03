@@ -90,16 +90,7 @@ function setITranslatorFont(font) {
   });
 }
 
-function indicator() {
-  let element = document.querySelector('#itarea-mode-indicator');
-  if (!element) {
-    element = document.createElement('div');
-    element.id = 'itarea-mode-indicator';
-    element.hidden = true;
-    document.body.append(element);
-  }
-  return element;
-}
+function indicator(widget) { return widget.querySelector('[data-mode-indicator]'); }
 
 class ITranslatorTextarea extends HTMLElement {
   connectedCallback() {
@@ -110,7 +101,7 @@ class ITranslatorTextarea extends HTMLElement {
       .map(([id, target]) => `<option value="${id}">${target.label}</option>`).join('');
     const fonts = Object.entries(pageConfig.fonts?.options || { system: { label: 'System default' } })
       .map(([id, font]) => `<option value="${id}">${font.label}</option>`).join('');
-    this.innerHTML = `<section class="itarea"><label>${label}</label><div class="itarea__bar"><button type="button" data-mode="itrans" class="active">iTrans</button><button type="button" data-mode="roman">Roman (IAST)</button><button type="button" data-mode="english">English</button></div><div class="itarea__editor"><textarea spellcheck="false" aria-label="${label}" placeholder="Type Sanskrit with ITRANS"></textarea><div class="itarea__actions"><button type="button" class="itarea__icon" data-settings title="Target language settings" aria-label="Target language settings">${settingsIcon}</button><button type="button" class="itarea__icon" data-copy title="Copy text" aria-label="Copy text">${copyIcon}</button></div><div class="itarea__settings" hidden><label>Target language <select data-target-select>${targets}</select></label><label>Font <select data-font-select>${fonts}</select></label></div></div></section>`;
+    this.innerHTML = `<section class="itarea"><label>${label}</label><div class="itarea__bar"><button type="button" data-mode="itrans" class="active">iTrans</button><button type="button" data-mode="roman">Roman (IAST)</button><button type="button" data-mode="english">English</button></div><div class="itarea__editor"><textarea spellcheck="false" aria-label="${label}" placeholder="Type Sanskrit with ITRANS"></textarea><span class="itarea__mode-tab" data-mode-indicator></span><div class="itarea__actions"><button type="button" class="itarea__icon" data-settings title="Target language settings" aria-label="Target language settings">${settingsIcon}</button><button type="button" class="itarea__icon" data-copy title="Copy text" aria-label="Copy text">${copyIcon}</button></div><div class="itarea__settings" hidden><label>Target language <select data-target-select>${targets}</select></label><label>Font <select data-font-select>${fonts}</select></label></div></div></section>`;
     this.mode = 'itrans';
     this.rawBuffer = '';
     this.bufferStart = null;
@@ -148,13 +139,12 @@ class ITranslatorTextarea extends HTMLElement {
   }
 
   updateModeIndicator() {
-    const element = indicator();
+    const element = indicator(this);
     element.textContent = this.mode === 'english'
       ? 'No transliteration'
       : this.mode === 'roman'
         ? 'Roman'
         : pageConfig.targets[pageTarget].label;
-    element.hidden = false;
   }
 
   setMode(mode) {
