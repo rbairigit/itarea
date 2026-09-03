@@ -30,7 +30,7 @@ export function createTransliterator(config, target = config.defaultTarget) {
         }
       const glyph = tokens[key];
       if (independentVowels.has(key) && pendingConsonant) output += vowelMarks[key];
-      else { if (pendingConsonant && !independentVowels.has(key)) output += '्'; output += glyph; }
+      else { if (pendingConsonant && !independentVowels.has(key) && key !== '.N') output += '्'; output += glyph; }
       pendingConsonant = consonants.has(key);
       if (key === '.h' || key === 'M' || key === 'H' || key === '.N') pendingConsonant = false;
       index += key.length;

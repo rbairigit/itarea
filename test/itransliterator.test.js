@@ -43,8 +43,8 @@ test('renders OM and AUM by target script', () => {
   assert.equal(createTransliterator(config, 'malayalam')('OM AUM'), 'ॐ ॐ');
 });
 test('renders avagraha and chandrabindu shortcuts', () => {
-  assert.equal(transliterate('.a .N'), 'ऽ अँ');
-  assert.equal(createTransliterator(config, 'telugu')('.a .N'), 'ఽ అఁ');
+  assert.equal(transliterate('.a k.N'), 'ऽ कँ');
+  assert.equal(createTransliterator(config, 'telugu')('.a k.N'), 'ఽ కఁ');
 });
 test('renders digits in the selected script', () => {
   assert.equal(transliterate('0123456789'), '०१२३४५६७८९');
