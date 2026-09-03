@@ -15,6 +15,8 @@ is required.
 - Custom aliases include `R` for `ऋ` and `RR` for `ॠ`, in addition to the
   standard `RRi`/`R^i` and `RRI`/`R^I` forms.
 - English mode leaves the input unchanged.
+- `Ctrl+S` selects iTrans mode. `Ctrl+E` or `Escape` selects English mode.
+  English mode turns the input light grey and shows a floating mode indicator.
 - The page-level target menu is populated from the configuration. The initial
   configuration contains Sanskrit/Devanagari; additional target scripts can be
   added without changing widget markup.
