@@ -84,7 +84,8 @@ export class ITranslatorTextarea extends HTMLElement {
 
   applyFont() {
     const family = pageConfig.fonts?.options?.[pageFont]?.family || 'system-ui';
-    this.style.setProperty('--itarea-font-family', `${family}, system-ui, sans-serif`);
+    const cssFamily = family === 'system-ui' ? 'system-ui' : `"${family}"`;
+    this.style.setProperty('--itarea-font-family', `${cssFamily}, system-ui, sans-serif`);
   }
 
   setMode(mode) {
