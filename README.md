@@ -60,6 +60,16 @@ Mappings are matched longest-first. Add aliases in `aliases` and characters in
 "R^i": "ऋ"
 ```
 
+For each alias, use this rule:
+
+- Add a normal consonant, punctuation mark, or standalone symbol to `aliases`.
+- For a custom vowel, add both the standalone glyph to `aliases` and its
+  combining sign to `vowelMarks`; this makes it combine after consonants.
+- Add the equivalent IAST form to `iastTokens` if it should also work in Roman
+  mode.
+
+After editing the JSON file, reload the page or recreate the widget.
+
 ## References
 
 The mapping vocabulary follows the ITRANS scheme, an ASCII transliteration

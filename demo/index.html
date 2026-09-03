@@ -4,7 +4,7 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>iTranslator Text Area Demo</title>
   <style>
-    body{max-width:850px;margin:3rem auto;padding:0 1rem 4rem;font:16px/1.55 system-ui;background:#fcfaf5;color:#29241c}h1{margin-bottom:.2rem}h2{margin-top:2.4rem}code{background:#eee8db;padding:.1rem .3rem;border-radius:.2rem}.itarea{margin:1.5rem 0}.itarea label{font-weight:700}.itarea__bar{display:flex;gap:.4rem;margin:.65rem 0}.itarea button{border:1px solid #bcae98;border-radius:.4rem;padding:.35rem .7rem;background:#fff;cursor:pointer}.itarea button.active{background:#774b0a;color:#fff}.itarea textarea,.itarea output{display:block;width:100%;min-height:110px;padding:.75rem;box-sizing:border-box;border:1px solid #bcae98;border-radius:.5rem;font:1.1rem/1.5 "Noto Sans Devanagari",system-ui}.itarea textarea.itarea__english{background:#e5e5e5}.itarea output{margin-top:.7rem;background:#fffdf8;white-space:pre-wrap}#itarea-mode-indicator{position:fixed;top:18px;right:18px;padding:10px 14px;border-radius:999px;background:#5d5d5d;color:#fff;box-shadow:0 3px 12px #0004;font-weight:700}select{font:inherit;padding:.35rem}.note{padding:1rem 1.2rem;border-left:4px solid #a66b10;background:#f4eddd}
+    body{max-width:850px;margin:3rem auto;padding:0 1rem 4rem;font:16px/1.55 system-ui;background:#fcfaf5;color:#29241c}h1{margin-bottom:.2rem}h2{margin-top:2.4rem}code{background:#eee8db;padding:.1rem .3rem;border-radius:.2rem}.itarea{margin:1.5rem 0}.itarea label{font-weight:700}.itarea__bar{display:flex;gap:.4rem;margin:.65rem 0}.itarea button{border:1px solid #bcae98;border-radius:.4rem;padding:.35rem .7rem;background:#fff;cursor:pointer}.itarea button.active{background:#774b0a;color:#fff}.itarea textarea,.itarea output{display:block;width:100%;min-height:110px;padding:.75rem;box-sizing:border-box;border:1px solid #bcae98;border-radius:.5rem;font:1.1rem/1.5 "Noto Sans Devanagari",system-ui}.itarea textarea.itarea__english{background:#e5e5e5}.itarea output{margin-top:.7rem;background:#fffdf8;white-space:pre-wrap}#itarea-mode-indicator{position:fixed;top:18px;right:18px;padding:10px 14px;border-radius:999px;background:#5d5d5d;color:#fff;box-shadow:0 3px 12px #0004;font-weight:700}select{font:inherit;padding:.35rem}.note{padding:1rem 1.2rem;border-left:4px solid #a66b10;background:#f4eddd}pre{overflow:auto;padding:1rem;background:#29241c;color:#f8f2e7;border-radius:.5rem}details{margin:1rem 0;border:1px solid #d4c9b8;border-radius:.5rem;background:#fffdf8}summary{padding:.75rem 1rem;cursor:pointer;font-weight:700}table{width:100%;border-collapse:collapse}th,td{padding:.45rem .7rem;border-top:1px solid #e5ddd0;text-align:left}td:last-child{font:1.1rem "Noto Sans Devanagari",system-ui}.mapping-wrap{padding:0 .7rem .7rem}
   </style>
 </head>
 <body>
@@ -25,6 +25,17 @@
 
   <h2>Using the widget in another page</h2>
   <p>See <code>README.md</code> for the reusable module version. It exposes the <code>&lt;i-translator-textarea&gt;</code> element and reads the editable JSON configuration.</p>
+  <h2>Configuration and custom mappings</h2>
+  <p>The reusable widget reads <code>config/itrans-config.json</code>. Add normal aliases to <code>aliases</code>. If an alias is a vowel, also add its combining sign to <code>vowelMarks</code>, so it works after consonants. Add the matching IAST spelling to <code>iastTokens</code> when it should work in Roman mode too.</p>
+  <pre>{
+  "aliases": { "R": "ऋ", "RR": "ॠ" },
+  "vowelMarks": { "R": "ृ", "RR": "ॄ" },
+  "iastTokens": { "R": "ṛ", "RR": "ṝ" }
+}</pre>
+  <p>For example, <code>R</code> becomes ऋ by itself, while <code>kR</code> becomes कृ because <code>R</code> has a combining vowel sign. Reload the widget after changing the JSON file.</p>
+  <h2>Supported mappings</h2>
+  <p>Explore the complete starter mappings below. The project configuration file is the source of truth for the reusable widget.</p>
+  <div id="mappingTables"></div>
 
   <script>
     // Embedded starter configuration: this avoids fetch() so file:// opening works.
@@ -43,5 +54,8 @@
     widget.replace=function(){const convert=this.mode==='roman'?romanize:transliterate;this.input.setRangeText(convert(this.rawBuffer),this.bufferStart,this.input.selectionEnd,'end')};
     widget.paste=function(e){if(this.mode==='english')return;const text=e.clipboardData?.getData('text/plain');if(text===undefined)return;e.preventDefault();this.flush();const convert=this.mode==='roman'?romanize:transliterate;this.input.setRangeText(convert(text),this.input.selectionStart,this.input.selectionEnd,'end')};
     widget.key=function(e){if(e.ctrlKey&&e.key.toLowerCase()==='s'){e.preventDefault();this.setMode('itrans');return}if(e.ctrlKey&&e.key.toLowerCase()==='r'){e.preventDefault();this.setMode('roman');return}if((e.ctrlKey&&e.key.toLowerCase()==='e')||e.key==='Escape'){e.preventDefault();this.setMode('english');return}if(this.mode==='english')return;if(e.key==='Backspace'&&this.rawBuffer){e.preventDefault();this.rawBuffer=this.rawBuffer.slice(0,-1);this.replace();return}if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End','Delete'].includes(e.key)){this.flush();return}if(e.key.length===1&&!e.metaKey&&!e.altKey){e.preventDefault();if(this.bufferStart===null)this.bufferStart=this.input.selectionStart;this.rawBuffer+=e.key;this.replace()}else if(e.key==='Enter'||e.key==='Tab')this.flush()};
+    const tables=document.querySelector('#mappingTables');
+    function showMappings(title,map){const entries=Object.entries(map).sort(([a],[b])=>a.localeCompare(b));const rows=entries.map(([input,output])=>`<tr><td><code>${input}</code></td><td>${output||'—'}</td></tr>`).join('');tables.insertAdjacentHTML('beforeend',`<details><summary>${title} (${entries.length} mappings)</summary><div class="mapping-wrap"><table><thead><tr><th>ASCII input</th><th>Output</th></tr></thead><tbody>${rows}</tbody></table></div></details>`)}
+    showMappings('Sanskrit (Devanagari)',{...config.tokens,...config.aliases});showMappings('Roman (IAST)',iast);
   </script>
 </body></html>
