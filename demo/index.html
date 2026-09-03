@@ -1,9 +1,38 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>iTranslator Text Area</title><style>
-body{max-width:800px;margin:3rem auto;padding:0 1rem;font:16px system-ui;background:#fcfaf5;color:#29241c}h1{margin-bottom:.25rem}.itarea{margin:2rem 0}.itarea label{font-weight:700}.itarea__bar{display:flex;gap:.4rem;margin:.65rem 0}.itarea button{border:1px solid #bcae98;border-radius:.4rem;padding:.35rem .7rem;background:#fff;cursor:pointer}.itarea button.active{background:#774b0a;color:#fff}.itarea textarea,.itarea output{display:block;width:100%;min-height:110px;padding:.75rem;box-sizing:border-box;border:1px solid #bcae98;border-radius:.5rem;font:1.1rem/1.5 "Noto Sans Devanagari",system-ui}.itarea textarea.itarea__english{background:#e5e5e5}.itarea output{margin-top:.7rem;background:#fffdf8;white-space:pre-wrap}#itarea-mode-indicator{position:fixed;top:18px;right:18px;padding:10px 14px;border-radius:999px;background:#5d5d5d;color:#fff;box-shadow:0 3px 12px #0004;font-weight:700}select{font:inherit;padding:.35rem}
-</style></head><body><h1>iTranslator Text Area</h1><p>Type ITRANS in the input. The Sanskrit result is shown below it.</p><label>Target language <select id="target"></select></label><i-translator-textarea label="Sanskrit text"></i-translator-textarea><script type="module">
-import {{ configureITranslator, ITranslatorTextarea }} from '../src/itextarea.js';
-const config=await fetch('../config/itrans-config.json').then(r=>r.json()); configureITranslator(config);
-const target=document.querySelector('#target'); for(const [id, data] of Object.entries(config.targets)) target.add(new Option(data.label,id));
-target.addEventListener('change', () => document.querySelectorAll('i-translator-textarea').forEach(widget => widget.render()));
-</script></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>iTranslator Text Area Demo</title>
+  <style>
+    body{max-width:850px;margin:3rem auto;padding:0 1rem 4rem;font:16px/1.55 system-ui;background:#fcfaf5;color:#29241c}h1{margin-bottom:.2rem}h2{margin-top:2.4rem}code{background:#eee8db;padding:.1rem .3rem;border-radius:.2rem}.itarea{margin:1.5rem 0}.itarea label{font-weight:700}.itarea__bar{display:flex;gap:.4rem;margin:.65rem 0}.itarea button{border:1px solid #bcae98;border-radius:.4rem;padding:.35rem .7rem;background:#fff;cursor:pointer}.itarea button.active{background:#774b0a;color:#fff}.itarea textarea,.itarea output{display:block;width:100%;min-height:110px;padding:.75rem;box-sizing:border-box;border:1px solid #bcae98;border-radius:.5rem;font:1.1rem/1.5 "Noto Sans Devanagari",system-ui}.itarea textarea.itarea__english{background:#e5e5e5}.itarea output{margin-top:.7rem;background:#fffdf8;white-space:pre-wrap}#itarea-mode-indicator{position:fixed;top:18px;right:18px;padding:10px 14px;border-radius:999px;background:#5d5d5d;color:#fff;box-shadow:0 3px 12px #0004;font-weight:700}select{font:inherit;padding:.35rem}.note{padding:1rem 1.2rem;border-left:4px solid #a66b10;background:#f4eddd}
+  </style>
+</head>
+<body>
+  <h1>iTranslator Text Area</h1>
+  <p>This standalone demo works directly from your computer - no server or installation is needed.</p>
+  <label>Target language <select id="target"></select></label>
+  <i-translator-textarea label="Sanskrit text"></i-translator-textarea>
+
+  <h2>How to use it</h2>
+  <ol>
+    <li>Start in <strong>iTrans</strong> mode and type ASCII ITRANS text, such as <code>raama</code>, <code>R</code>, or <code>RR</code>.</li>
+    <li>The result appears directly below the input. For example, <code>raama</code> becomes राम, <code>R</code> becomes ऋ, and <code>RR</code> becomes ॠ.</li>
+    <li>Press <strong>Ctrl+S</strong> to select iTrans mode.</li>
+    <li>Press <strong>Ctrl+E</strong> or <strong>Escape</strong> for English mode. The input turns light grey and its contents remain unchanged.</li>
+  </ol>
+  <div class="note"><strong>Custom mappings:</strong> Edit <code>config/itrans-config.json</code> when using the reusable widget in an application. This standalone page intentionally embeds the starter mapping so it can be opened with a double-click.</div>
+
+  <h2>Using the widget in another page</h2>
+  <p>See <code>README.md</code> for the reusable module version. It exposes the <code>&lt;i-translator-textarea&gt;</code> element and reads the editable JSON configuration.</p>
+
+  <script>
+    // Embedded starter configuration: this avoids fetch() so file:// opening works.
+    const config={defaultTarget:'sanskrit-devanagari',targets:{'sanskrit-devanagari':{label:'Sanskrit (Devanagari)'}},tokens:{a:'अ',A:'आ',aa:'आ',i:'इ',I:'ई',ii:'ई',u:'उ',U:'ऊ',uu:'ऊ',e:'ए',ai:'ऐ',o:'ओ',au:'औ',RRi:'ऋ','R^i':'ऋ',RRI:'ॠ','R^I':'ॠ',k:'क',kh:'ख',g:'ग',gh:'घ','~N':'ङ',ch:'च',Ch:'छ',j:'ज',jh:'झ','~n':'ञ',T:'ट',Th:'ठ',D:'ड',Dh:'ढ',N:'ण',t:'त',th:'थ',d:'द',dh:'ध',n:'न',p:'प',ph:'फ',b:'ब',bh:'भ',m:'म',y:'य',r:'र',l:'ल',v:'व',w:'व',sh:'श',Sh:'ष',s:'स',h:'ह',M:'ं',H:'ः','.h':'्','|':'।','||':'॥'},aliases:{R:'ऋ',RR:'ॠ'}};
+    const vowels={a:'',A:'ा',aa:'ा',i:'ि',I:'ी',ii:'ी',u:'ु',U:'ू',uu:'ू',e:'े',ai:'ै',o:'ो',au:'ौ',RRi:'ृ','R^i':'ृ',RRI:'ॄ','R^I':'ॄ'};
+    const consonants=new Set(['k','kh','g','gh','~N','ch','Ch','j','jh','~n','T','Th','D','Dh','N','t','th','d','dh','n','p','ph','b','bh','m','y','r','l','v','w','sh','Sh','s','h']);
+    function transliterate(input){const map={...config.tokens,...config.aliases},keys=Object.keys(map).sort((a,b)=>b.length-a.length);let out='',i=0,pending=false;while(i<input.length){const key=keys.find(k=>input.startsWith(k,i));if(!key){out+=input[i++];pending=false;continue}if(key in vowels&&pending)out+=vowels[key];else{if(pending&&!(key in vowels))out+='्';out+=map[key]}pending=consonants.has(key);if(['M','H','.h'].includes(key))pending=false;i+=key.length}return out}
+    class ITranslatorTextarea extends HTMLElement{connectedCallback(){this.innerHTML='<section class="itarea"><label>'+this.getAttribute('label')+'</label><div class="itarea__bar"><button type="button" data-mode="itrans" class="active">iTrans</button><button type="button" data-mode="english">English</button></div><textarea spellcheck="false" placeholder="Type ITRANS here"></textarea><output></output></section>';this.mode='itrans';this.input=this.querySelector('textarea');this.output=this.querySelector('output');const ind=document.createElement('div');ind.id='itarea-mode-indicator';ind.textContent='iTranArea in English mode';ind.hidden=true;document.body.append(ind);this.setMode('itrans');this.querySelector('.itarea__bar').onclick=e=>{const b=e.target.closest('button');if(b)this.setMode(b.dataset.mode)};this.input.oninput=()=>this.render();this.input.onkeydown=e=>{if(e.ctrlKey&&e.key.toLowerCase()==='s'){e.preventDefault();this.setMode('itrans')}if((e.ctrlKey&&e.key.toLowerCase()==='e')||e.key==='Escape'){e.preventDefault();this.setMode('english')}}}setMode(mode){this.mode=mode;this.querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));this.input.classList.toggle('itarea__english',mode==='english');document.querySelector('#itarea-mode-indicator').hidden=mode!=='english';this.render();this.input.focus()}render(){this.output.textContent=this.mode==='itrans'?transliterate(this.input.value):this.input.value}}
+    customElements.define('i-translator-textarea',ITranslatorTextarea);
+    const select=document.querySelector('#target');Object.entries(config.targets).forEach(([id,target])=>select.add(new Option(target.label,id)));
+  </script>
+</body></html>
