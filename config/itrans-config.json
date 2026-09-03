@@ -5,6 +5,10 @@
     "sanskrit-devanagari": {
       "label": "Sanskrit (Devanagari)",
       "script": "Devanagari"
+    },
+    "sanskrit-iast": {
+      "label": "Roman (IAST)",
+      "script": "Latin"
     }
   },
   "tokens": {
@@ -28,6 +32,14 @@
   "vowelMarks": {
     "R": "ृ",
     "RR": "ॄ"
+  },
+  "iastTokens": {
+    "a": "a", "A": "ā", "aa": "ā", "i": "i", "I": "ī", "ii": "ī", "ee": "ī", "u": "u", "U": "ū", "uu": "ū", "e": "e", "ai": "ai", "o": "o", "au": "au",
+    "R": "ṛ", "RR": "ṝ", "RRi": "ṛ", "R^i": "ṛ", "RRI": "ṝ", "R^I": "ṝ", "LLi": "ḷ", "L^i": "ḷ", "LLI": "ḹ", "L^I": "ḹ",
+    "k": "k", "kh": "kh", "g": "g", "gh": "gh", "~N": "ṅ", "ch": "c", "Ch": "ch", "j": "j", "jh": "jh", "~n": "ñ",
+    "T": "ṭ", "Th": "ṭh", "D": "ḍ", "Dh": "ḍh", "N": "ṇ", "t": "t", "th": "th", "d": "d", "dh": "dh", "n": "n",
+    "p": "p", "ph": "ph", "b": "b", "bh": "bh", "m": "m", "y": "y", "r": "r", "l": "l", "v": "v", "w": "v", "sh": "ś", "Sh": "ṣ", "s": "s", "h": "h", "L": "ḻ",
+    "M": "ṃ", ".m": "ṃ", ".n": "ṃ", "H": "ḥ", ".N": "m̐", ".a": "'", ".h": "", "OM": "oṃ", "AUM": "aum", "kSh": "kṣ", "kS": "kṣ", "GYa": "jñ", "j~na": "jña"
   },
   "punctuation": {
     "|": "।", "||": "॥"

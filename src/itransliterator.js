@@ -1,5 +1,18 @@
 export function createTransliterator(config, target = config.defaultTarget) {
   if (!config.targets[target]) throw new Error(`Unsupported target: ${target}`);
+  if (target === 'sanskrit-iast') {
+    const tokens = config.iastTokens || {};
+    const keys = Object.keys(tokens).sort((a, b) => b.length - a.length);
+    return (input) => {
+      let output = '', index = 0;
+      while (index < input.length) {
+        const key = keys.find(candidate => input.startsWith(candidate, index));
+        if (!key) { output += input[index]; index += 1; continue; }
+        output += tokens[key]; index += key.length;
+      }
+      return output;
+    };
+  }
   const tokens = { ...config.tokens, ...config.aliases, ...config.punctuation };
   const keys = Object.keys(tokens).sort((a, b) => b.length - a.length);
   const consonants = new Set(['k','kh','g','gh','~N','ch','Ch','j','jh','~n','T','Th','D','Dh','N','t','th','d','dh','n','p','ph','b','bh','m','y','r','l','v','w','sh','Sh','s','h','L']);

@@ -19,6 +19,8 @@ is required.
 - English mode leaves the input unchanged.
 - `Ctrl+S` selects iTrans mode. `Ctrl+E` or `Escape` selects English mode.
   English mode turns the input light grey and shows a floating mode indicator.
+- `Ctrl+R` selects Roman mode, which replaces ITRANS input with IAST, such as
+  `kRtaj~naH` becoming `kṛtajñaḥ`.
 - The page-level target menu is populated from the configuration. The initial
   configuration contains Sanskrit/Devanagari; additional target scripts can be
   added without changing widget markup.

@@ -19,7 +19,7 @@ export class ITranslatorTextarea extends HTMLElement {
   connectedCallback() {
     if (!pageConfig) throw new Error('Call configureITranslator(config) before adding i-translator-textarea elements.');
     const label = this.getAttribute('label') || 'Text';
-    this.innerHTML = `<section class="itarea"><label>${label}</label><div class="itarea__bar"><button type="button" data-mode="itrans" class="active">iTrans</button><button type="button" data-mode="english">English</button></div><textarea spellcheck="false" aria-label="${label}" placeholder="Type Sanskrit with ITRANS"></textarea></section>`;
+    this.innerHTML = `<section class="itarea"><label>${label}</label><div class="itarea__bar"><button type="button" data-mode="itrans" class="active">iTrans</button><button type="button" data-mode="roman">Roman (IAST)</button><button type="button" data-mode="english">English</button></div><textarea spellcheck="false" aria-label="${label}" placeholder="Type Sanskrit with ITRANS"></textarea></section>`;
     this.mode = 'itrans';
     this.rawBuffer = '';
     this.bufferStart = null;
@@ -34,14 +34,14 @@ export class ITranslatorTextarea extends HTMLElement {
     this.input.addEventListener('blur', () => this.flushBuffer());
   }
 
-  get transliterate() { return createTransliterator(pageConfig); }
+  get transliterate() { return createTransliterator(pageConfig, this.mode === 'roman' ? 'sanskrit-iast' : pageConfig.defaultTarget); }
 
   setMode(mode) {
     this.flushBuffer();
     this.mode = mode;
     this.querySelectorAll('button').forEach(button => button.classList.toggle('active', button.dataset.mode === mode));
     this.input.classList.toggle('itarea__english', mode === 'english');
-    this.input.placeholder = mode === 'itrans' ? 'Type Sanskrit with ITRANS' : 'Type English';
+    this.input.placeholder = mode === 'english' ? 'Type English' : 'Type Sanskrit with ITRANS';
     indicator().hidden = mode !== 'english';
     this.input.focus();
   }
@@ -52,6 +52,9 @@ export class ITranslatorTextarea extends HTMLElement {
     }
     if ((event.ctrlKey && event.key.toLowerCase() === 'e') || event.key === 'Escape') {
       event.preventDefault(); this.setMode('english'); return;
+    }
+    if (event.ctrlKey && event.key.toLowerCase() === 'r') {
+      event.preventDefault(); this.setMode('roman'); return;
     }
     if (this.mode !== 'itrans') return;
     if (event.key === 'Backspace' && this.rawBuffer) {
