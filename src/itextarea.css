@@ -1,11 +1,14 @@
 /* iTranslator Text Area — include this stylesheet once per page. */
+@font-face { font-family: "ITArea Noto Sans Devanagari"; src: url("../fonts/NotoSansDevanagari-Regular.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "ITArea Noto Serif Devanagari"; src: url("../fonts/NotoSerifDevanagari-Regular.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "ITArea Tiro Devanagari Sanskrit"; src: url("../fonts/TiroDevanagariSanskrit-Regular.ttf") format("truetype"); font-display: swap; }
 .itarea { position: relative; margin: 1rem 0; color: #29241c; font: 16px/1.5 system-ui, sans-serif; }
 .itarea label { font-weight: 700; }
 .itarea__bar { display: flex; gap: .4rem; margin: .65rem 0; }
 .itarea button { border: 1px solid #bcae98; border-radius: .4rem; padding: .35rem .7rem; background: #fff; color: inherit; font: inherit; cursor: pointer; }
 .itarea button.active { background: #774b0a; color: #fff; }
 .itarea__editor { position: relative; }
-.itarea textarea { display: block; box-sizing: border-box; width: 100%; min-height: 110px; padding: .75rem 6.2rem .75rem .75rem; border: 1px solid #bcae98; border-radius: .5rem; background: #fff; color: inherit; font: 1.1rem/1.5 "Noto Sans Devanagari", system-ui, sans-serif; }
+.itarea textarea { display: block; box-sizing: border-box; width: 100%; min-height: 110px; padding: .75rem 6.2rem .75rem .75rem; border: 1px solid #bcae98; border-radius: .5rem; background: #fff; color: inherit; font: 1.1rem/1.5 var(--itarea-font-family, "ITArea Noto Sans Devanagari", "Noto Sans Devanagari", system-ui, sans-serif); }
 .itarea textarea.itarea__english { background: #e5e5e5; }
 .itarea textarea.itarea__roman { background: #e1f3df; }
 .itarea__actions { position: absolute; top: .55rem; right: .55rem; z-index: 2; display: flex; gap: .15rem; }
@@ -13,6 +16,7 @@
 .itarea button.itarea__icon svg { display: block; width: 20px; height: 20px; fill: currentColor; }
 .itarea button.itarea__icon:hover, .itarea button.itarea__icon:focus-visible { background: #e8e8e8; color: #4d4d4d; outline: 0; }
 .itarea__settings { position: absolute; top: 3.2rem; right: .55rem; z-index: 3; padding: .45rem; border: 1px solid #bcae98; border-radius: .4rem; background: #fffdf8; box-shadow: 0 3px 12px #0003; }
-.itarea__settings label { font-size: .85rem; }
+.itarea__settings label { display: block; font-size: .85rem; }
+.itarea__settings label + label { margin-top: .4rem; }
 .itarea__settings select { margin-left: .35rem; font: inherit; }
 #itarea-mode-indicator { position: fixed; top: 18px; right: 18px; z-index: 10; padding: 10px 14px; border-radius: 999px; background: #5d5d5d; color: #fff; box-shadow: 0 3px 12px #0004; font: 700 14px/1.2 system-ui, sans-serif; }

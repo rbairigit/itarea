@@ -16,6 +16,7 @@ Run `npm run build`. This creates the portable `dist/` folder:
   transliteration engine.
 - `dist/itarea.css` — the widget’s ready-to-use appearance.
 - `dist/itrans-config.json` — editable mappings and target-language settings.
+- `dist/fonts/` — bundled Sanskrit fonts and their SIL Open Font Licenses.
 
 Copy that entire folder into any website and add the following to its HTML
 file. Keep all three files together; the example assumes they are in
@@ -38,6 +39,15 @@ file. Keep all three files together; the example assumes they are in
   configureITranslator(config);
   setITranslatorTarget('telugu'); // Optional; Sanskrit is the default.
 </script>
+```
+
+The settings control in each widget includes a page-wide font selector. The
+starter package includes regular styles of Noto Sans Devanagari, Noto Serif
+Devanagari, and Tiro Devanagari Sanskrit, plus a System default choice. To set
+the selection from JavaScript, import and call `setITranslatorFont()`:
+
+```js
+setITranslatorFont('tiro-devanagari-sanskrit');
 ```
 
 Use a local web server when testing this integration. Browsers deliberately
@@ -71,6 +81,8 @@ complete compatibility with every historical ITRANS extension.
 - `src/itransliterator.js` - configurable transliteration engine.
 - `src/itextarea.js` - reusable `<i-translator-textarea>` web component.
 - `src/itextarea.css` - reusable widget styling.
+- `fonts/` - source font files and their licenses; only the regular styles are
+  included to keep the bundle compact.
 - `dist/` - generated, drop-in browser package; create or refresh it with
   `npm run build`.
 - `demo/index.html` - working example and page-level controls.
