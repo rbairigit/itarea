@@ -24,7 +24,10 @@ export function createTransliterator(config, target = config.defaultTarget) {
     let output = '', index = 0, pendingConsonant = false;
     while (index < input.length) {
       const key = keys.find(candidate => input.startsWith(candidate, index));
-      if (!key) { output += input[index]; pendingConsonant = false; index += 1; continue; }
+        if (!key) {
+          if (pendingConsonant) output += '्';
+          output += input[index]; pendingConsonant = false; index += 1; continue;
+        }
       const glyph = tokens[key];
       if (independentVowels.has(key) && pendingConsonant) output += vowelMarks[key];
       else { if (pendingConsonant && !independentVowels.has(key)) output += '्'; output += glyph; }
@@ -32,7 +35,7 @@ export function createTransliterator(config, target = config.defaultTarget) {
       if (key === '.h' || key === 'M' || key === 'H' || key === '.N') pendingConsonant = false;
       index += key.length;
     }
-    return output;
+    return pendingConsonant ? output + '्' : output;
   };
   if (targetConfig.transform === 'script-offset') {
     return (input) => [...devanagari(input)].map(char => {
