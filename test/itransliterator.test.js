@@ -6,6 +6,9 @@ import { createTransliterator } from '../src/itransliterator.js';
 const transliterate = createTransliterator(config);
 test('uses configurable Sanskrit aliases', () => {
   assert.equal(transliterate('R RR RRi R^i RRI R^I'), 'ऋ ॠ ऋ ऋ ॠ ॠ');
+  assert.equal(transliterate('kRtaj~naH'), 'कृतज्ञः');
+  assert.equal(transliterate('kRRitaj~naH'), 'कृतज्ञः');
+  assert.equal(transliterate('kR^itaj~naH'), 'कृतज्ञः');
 });
 test('forms basic consonant-vowel syllables', () => {
   assert.equal(transliterate('raama'), 'राम');
