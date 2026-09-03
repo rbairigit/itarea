@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>iTranslator Text Area</title><style>
+body{max-width:800px;margin:3rem auto;padding:0 1rem;font:16px system-ui;background:#fcfaf5;color:#29241c}h1{margin-bottom:.25rem}.itarea{margin:2rem 0}.itarea label{font-weight:700}.itarea__bar{display:flex;gap:.4rem;margin:.65rem 0}.itarea button{border:1px solid #bcae98;border-radius:.4rem;padding:.35rem .7rem;background:#fff;cursor:pointer}.itarea button.active{background:#774b0a;color:#fff}.itarea textarea,.itarea output{display:block;width:100%;min-height:110px;padding:.75rem;box-sizing:border-box;border:1px solid #bcae98;border-radius:.5rem;font:1.1rem/1.5 "Noto Sans Devanagari",system-ui}.itarea output{margin-top:.7rem;background:#fffdf8;white-space:pre-wrap}select{font:inherit;padding:.35rem}
+</style></head><body><h1>iTranslator Text Area</h1><p>Type ITRANS in the input. The Sanskrit result is shown below it.</p><label>Target language <select id="target"></select></label><i-translator-textarea label="Sanskrit text"></i-translator-textarea><script type="module">
+import {{ configureITranslator, ITranslatorTextarea }} from '../src/itextarea.js';
+const config=await fetch('../config/itrans-config.json').then(r=>r.json()); configureITranslator(config);
+const target=document.querySelector('#target'); for(const [id, data] of Object.entries(config.targets)) target.add(new Option(data.label,id));
+target.addEventListener('change', () => document.querySelectorAll('i-translator-textarea').forEach(widget => widget.render()));
+</script></body></html>
