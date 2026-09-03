@@ -27,4 +27,6 @@ test('forms basic consonant-vowel syllables', () => {
   assert.equal(transliterate('namaH|'), 'नमः।');
   assert.equal(transliterate('raamam '), 'रामम् ');
   assert.equal(createTransliterator(config, 'telugu')('raamam '), 'రామమ్ ');
+  assert.equal(transliterate('| ||'), '। ॥');
+  assert.equal(transliterate('raamam||'), 'रामम्॥');
 });
