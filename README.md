@@ -8,6 +8,42 @@ ITRANS input mode (the default) and an English mode in the same text area.
 Open `demo/index.html` in a modern browser. No build step or network connection
 is required.
 
+## Drop-in package for another webpage
+
+Run `npm run build`. This creates the portable `dist/` folder:
+
+- `dist/itarea.js` — one browser ES module containing the widget and
+  transliteration engine.
+- `dist/itarea.css` — the widget’s ready-to-use appearance.
+- `dist/itrans-config.json` — editable mappings and target-language settings.
+
+Copy that entire folder into any website and add the following to its HTML
+file. Keep all three files together; the example assumes they are in
+`/assets/itarea/`.
+
+```html
+<link rel="stylesheet" href="/assets/itarea/itarea.css">
+
+<i-translator-textarea label="Sanskrit text"></i-translator-textarea>
+
+<script type="module">
+  import {
+    configureITranslator,
+    setITranslatorTarget
+  } from '/assets/itarea/itarea.js';
+
+  const config = await fetch('/assets/itarea/itrans-config.json')
+    .then(response => response.json());
+
+  configureITranslator(config);
+  setITranslatorTarget('telugu'); // Optional; Sanskrit is the default.
+</script>
+```
+
+Use a local web server when testing this integration. Browsers deliberately
+block `fetch()` of JSON from a `file://` page. The standalone demo remains an
+exception because it embeds its configuration directly.
+
 ## Current prototype
 
 - Sanskrit (Devanagari) is the default target.
@@ -34,6 +70,9 @@ complete compatibility with every historical ITRANS extension.
 - `config/itrans-config.json` - character maps and aliases to customize.
 - `src/itransliterator.js` - configurable transliteration engine.
 - `src/itextarea.js` - reusable `<i-translator-textarea>` web component.
+- `src/itextarea.css` - reusable widget styling.
+- `dist/` - generated, drop-in browser package; create or refresh it with
+  `npm run build`.
 - `demo/index.html` - working example and page-level controls.
 
 ## Usage
