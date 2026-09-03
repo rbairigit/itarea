@@ -24,7 +24,25 @@
   <div class="note"><strong>Custom mappings:</strong> Edit <code>config/itrans-config.json</code> when using the reusable widget in an application. This standalone page intentionally embeds the starter mapping so it can be opened with a double-click.</div>
 
   <h2>Using the widget in another page</h2>
-  <p>See <code>README.md</code> for the reusable module version. It exposes the <code>&lt;i-translator-textarea&gt;</code> element and reads the editable JSON configuration.</p>
+  <p>Run <code>npm run build</code> in the project folder. It creates a portable <code>dist/</code> folder containing <code>itarea.js</code>, <code>itarea.css</code>, and the editable <code>itrans-config.json</code>. Copy that whole folder into your website.</p>
+  <p>For example, if you copy it to <code>/assets/itarea/</code>, add this to your page:</p>
+  <pre>&lt;link rel="stylesheet" href="/assets/itarea/itarea.css"&gt;
+
+&lt;i-translator-textarea label="Sanskrit text"&gt;&lt;/i-translator-textarea&gt;
+
+&lt;script type="module"&gt;
+  import {
+    configureITranslator,
+    setITranslatorTarget
+  } from '/assets/itarea/itarea.js';
+
+  const config = await fetch('/assets/itarea/itrans-config.json')
+    .then(response =&gt; response.json());
+
+  configureITranslator(config);
+  setITranslatorTarget('telugu'); // Optional; Sanskrit is the default.
+&lt;/script&gt;</pre>
+  <div class="note"><strong>Important:</strong> Test this integration through a local web server or a hosted website. Browsers block JSON loading from a <code>file://</code> page. This demo works by double-click because it embeds its starter configuration directly.</div>
   <h2>Configuration and custom mappings</h2>
   <p>The reusable widget reads <code>config/itrans-config.json</code>. Add normal aliases to <code>aliases</code>. If an alias is a vowel, also add its combining sign to <code>vowelMarks</code>, so it works after consonants. Add the matching IAST spelling to <code>iastTokens</code> when it should work in Roman mode too.</p>
   <pre>{
