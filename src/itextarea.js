@@ -2,6 +2,8 @@ import { createTransliterator } from './itransliterator.js';
 
 let pageConfig;
 let pageTarget;
+const settingsIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.43 12.98c.04-.32.07-.65.07-.98s-.02-.66-.07-.98l2.11-1.65a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.61-.22l-2.49 1a7.36 7.36 0 0 0-1.69-.98L14.5 2.42A.49.49 0 0 0 14 2h-4a.49.49 0 0 0-.49.42l-.38 2.65c-.61.25-1.18.59-1.69.98l-2.49-1a.49.49 0 0 0-.61.22l-2 3.46a.5.5 0 0 0 .12.64l2.11 1.65c-.04.32-.08.65-.08.98s.03.66.08.98l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46c.12.22.38.31.61.22l2.49-1c.51.4 1.08.73 1.69.98l.38 2.65c.04.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.18-.58 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.65ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z"/></svg>';
+const copyIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1Zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2Zm0 16H8V7h11v14Z"/></svg>';
 export function configureITranslator(config) { pageConfig = config; pageTarget = config.defaultTarget; }
 export function setITranslatorTarget(target) {
   if (!pageConfig?.targets[target]) throw new Error(`Unsupported target: ${target}`);
@@ -32,7 +34,7 @@ export class ITranslatorTextarea extends HTMLElement {
     const targets = Object.entries(pageConfig.targets)
       .filter(([id]) => id !== 'sanskrit-iast')
       .map(([id, target]) => `<option value="${id}">${target.label}</option>`).join('');
-    this.innerHTML = `<section class="itarea"><label>${label}</label><div class="itarea__bar"><button type="button" data-mode="itrans" class="active">iTrans</button><button type="button" data-mode="roman">Roman (IAST)</button><button type="button" data-mode="english">English</button></div><div class="itarea__editor"><textarea spellcheck="false" aria-label="${label}" placeholder="Type Sanskrit with ITRANS"></textarea><div class="itarea__actions"><button type="button" class="itarea__icon" data-settings title="Target language settings" aria-label="Target language settings">⚙</button><button type="button" class="itarea__icon" data-copy title="Copy text" aria-label="Copy text">⧉</button></div><div class="itarea__settings" hidden><label>Target language <select data-target-select>${targets}</select></label></div></div></section>`;
+    this.innerHTML = `<section class="itarea"><label>${label}</label><div class="itarea__bar"><button type="button" data-mode="itrans" class="active">iTrans</button><button type="button" data-mode="roman">Roman (IAST)</button><button type="button" data-mode="english">English</button></div><div class="itarea__editor"><textarea spellcheck="false" aria-label="${label}" placeholder="Type Sanskrit with ITRANS"></textarea><div class="itarea__actions"><button type="button" class="itarea__icon" data-settings title="Target language settings" aria-label="Target language settings">${settingsIcon}</button><button type="button" class="itarea__icon" data-copy title="Copy text" aria-label="Copy text">${copyIcon}</button></div><div class="itarea__settings" hidden><label>Target language <select data-target-select>${targets}</select></label></div></div></section>`;
     this.mode = 'itrans';
     this.rawBuffer = '';
     this.bufferStart = null;
@@ -50,8 +52,8 @@ export class ITranslatorTextarea extends HTMLElement {
     this.querySelector('[data-copy]').addEventListener('click', async () => {
       this.flushBuffer();
       await navigator.clipboard.writeText(this.input.value);
-      const button = this.querySelector('[data-copy]'); const original = button.textContent;
-      button.textContent = '✓'; setTimeout(() => { button.textContent = original; }, 1200);
+      const button = this.querySelector('[data-copy]'); const original = button.innerHTML;
+      button.textContent = '✓'; setTimeout(() => { button.innerHTML = original; }, 1200);
     });
     this.input.addEventListener('keydown', event => this.handleKeydown(event));
     this.input.addEventListener('paste', event => this.handlePaste(event));
