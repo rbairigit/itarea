@@ -1,7 +1,7 @@
 # iTranslator Text Area
 
 `itarea` is a browser-native, configurable ITRANS input widget. It provides an
-ITRANS input mode (the default) and an English mode, with a live output preview.
+ITRANS input mode (the default) and an English mode in the same text area.
 
 ## Quick start
 
@@ -14,6 +14,8 @@ is required.
 - The widget reads all mappings from `config/itrans-config.json`.
 - Custom aliases include `R` for `ऋ` and `RR` for `ॠ`, in addition to the
   standard `RRi`/`R^i` and `RRI`/`R^I` forms.
+- ITRANS input is replaced in place by the configured target script, so Sanskrit
+  and English can be mixed in a single text area.
 - English mode leaves the input unchanged.
 - `Ctrl+S` selects iTrans mode. `Ctrl+E` or `Escape` selects English mode.
   English mode turns the input light grey and shows a floating mode indicator.
