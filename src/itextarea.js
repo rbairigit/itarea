@@ -6,7 +6,11 @@ export function configureITranslator(config) { pageConfig = config; pageTarget =
 export function setITranslatorTarget(target) {
   if (!pageConfig?.targets[target]) throw new Error(`Unsupported target: ${target}`);
   pageTarget = target;
-  document.querySelectorAll('i-translator-textarea').forEach(widget => widget.flushBuffer());
+  document.querySelectorAll('i-translator-textarea').forEach(widget => {
+    widget.flushBuffer();
+    const select = widget.querySelector('[data-target-select]');
+    if (select) select.value = target;
+  });
 }
 
 function indicator() {
@@ -25,15 +29,29 @@ export class ITranslatorTextarea extends HTMLElement {
   connectedCallback() {
     if (!pageConfig) throw new Error('Call configureITranslator(config) before adding i-translator-textarea elements.');
     const label = this.getAttribute('label') || 'Text';
-    this.innerHTML = `<section class="itarea"><label>${label}</label><div class="itarea__bar"><button type="button" data-mode="itrans" class="active">iTrans</button><button type="button" data-mode="roman">Roman (IAST)</button><button type="button" data-mode="english">English</button></div><textarea spellcheck="false" aria-label="${label}" placeholder="Type Sanskrit with ITRANS"></textarea></section>`;
+    const targets = Object.entries(pageConfig.targets)
+      .filter(([id]) => id !== 'sanskrit-iast')
+      .map(([id, target]) => `<option value="${id}">${target.label}</option>`).join('');
+    this.innerHTML = `<section class="itarea"><label>${label}</label><div class="itarea__actions"><button type="button" class="itarea__icon" data-copy title="Copy text" aria-label="Copy text">⧉</button><button type="button" class="itarea__icon" data-settings title="Target language settings" aria-label="Target language settings">⚙</button></div><div class="itarea__settings" hidden><label>Target language <select data-target-select>${targets}</select></label></div><div class="itarea__bar"><button type="button" data-mode="itrans" class="active">iTrans</button><button type="button" data-mode="roman">Roman (IAST)</button><button type="button" data-mode="english">English</button></div><textarea spellcheck="false" aria-label="${label}" placeholder="Type Sanskrit with ITRANS"></textarea></section>`;
     this.mode = 'itrans';
     this.rawBuffer = '';
     this.bufferStart = null;
     this.input = this.querySelector('textarea');
+    this.querySelector('[data-target-select]').value = pageTarget;
     this.setMode('itrans');
     this.querySelector('.itarea__bar').addEventListener('click', event => {
       const button = event.target.closest('button');
       if (button) this.setMode(button.dataset.mode);
+    });
+    this.querySelector('[data-settings]').addEventListener('click', () => {
+      const panel = this.querySelector('.itarea__settings'); panel.hidden = !panel.hidden;
+    });
+    this.querySelector('[data-target-select]').addEventListener('change', event => setITranslatorTarget(event.target.value));
+    this.querySelector('[data-copy]').addEventListener('click', async () => {
+      this.flushBuffer();
+      await navigator.clipboard.writeText(this.input.value);
+      const button = this.querySelector('[data-copy]'); const original = button.textContent;
+      button.textContent = '✓'; setTimeout(() => { button.textContent = original; }, 1200);
     });
     this.input.addEventListener('keydown', event => this.handleKeydown(event));
     this.input.addEventListener('paste', event => this.handlePaste(event));
@@ -47,6 +65,7 @@ export class ITranslatorTextarea extends HTMLElement {
     this.mode = mode;
     this.querySelectorAll('button').forEach(button => button.classList.toggle('active', button.dataset.mode === mode));
     this.input.classList.toggle('itarea__english', mode === 'english');
+    this.input.classList.toggle('itarea__roman', mode === 'roman');
     this.input.placeholder = mode === 'english' ? 'Type English' : 'Type Sanskrit with ITRANS';
     indicator().hidden = mode !== 'english';
     this.input.focus();
