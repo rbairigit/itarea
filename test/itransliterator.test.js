@@ -40,3 +40,8 @@ test('renders OM and AUM by target script', () => {
   assert.equal(createTransliterator(config, 'telugu')('OM AUM'), 'ఓం ఓం');
   assert.equal(createTransliterator(config, 'tamil')('OM AUM'), 'ௐ ௐ');
 });
+test('renders digits in the selected script', () => {
+  assert.equal(transliterate('0123456789'), '०१२३४५६७८९');
+  assert.equal(createTransliterator(config, 'telugu')('0123456789'), '౦౧౨౩౪౫౬౭౮౯');
+  assert.equal(createTransliterator(config, 'tamil')('0123456789'), '௦௧௨௩௪௫௬௭௮௯');
+});
