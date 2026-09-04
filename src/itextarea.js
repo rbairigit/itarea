@@ -42,11 +42,11 @@ export class ITranslatorTextarea extends HTMLElement {
       .map(([id, target]) => `<option value="${id}">${target.label}</option>`).join('');
     const fonts = Object.entries(pageConfig.fonts?.options || { system: { label: 'System default' } })
       .map(([id, font]) => `<option value="${id}">${font.label}</option>`).join('');
-    this.innerHTML = `<section class="itarea"><div class="itarea__bar"><button type="button" data-mode="itrans" class="active">iTrans</button><button type="button" data-mode="roman">Roman (IAST)</button><button type="button" data-mode="english">English</button></div><div class="itarea__editor"><textarea spellcheck="false" aria-label="${label}" placeholder="Type Sanskrit with ITRANS"></textarea><span class="itarea__mode-tab"><span data-mode-indicator></span><button type="button" class="itarea__tab-settings" data-settings title="Target language settings" aria-label="Target language settings">${settingsIcon}</button></span><div class="itarea__actions"><button type="button" class="itarea__icon" data-copy title="Copy text" aria-label="Copy text">${copyIcon}</button></div><div class="itarea__settings" hidden><label>Target language <select data-target-select>${targets}</select></label><label>Font <select data-font-select>${fonts}</select></label><label class="itarea__auto-expand">Auto-expand <input type="checkbox" data-auto-expand></label></div></div></section>`;
+    this.innerHTML = `<section class="itarea"><div class="itarea__bar"><button type="button" data-mode="itrans" class="active">iTrans</button><button type="button" data-mode="roman">Roman (IAST)</button><button type="button" data-mode="english">English</button></div><div class="itarea__editor"><textarea spellcheck="false" aria-label="${label}" placeholder="Type Sanskrit with ITRANS"></textarea><div class="itarea__resize-handle" data-resize-handle title="Drag to resize text area" aria-label="Drag to resize text area" role="separator"></div><span class="itarea__mode-tab"><span data-mode-indicator></span><button type="button" class="itarea__tab-settings" data-settings title="Target language settings" aria-label="Target language settings">${settingsIcon}</button></span><div class="itarea__actions"><button type="button" class="itarea__icon" data-copy title="Copy text" aria-label="Copy text">${copyIcon}</button></div><div class="itarea__settings" hidden><label>Target language <select data-target-select>${targets}</select></label><label>Font <select data-font-select>${fonts}</select></label><label class="itarea__auto-expand">Auto-expand <input type="checkbox" data-auto-expand checked></label></div></div></section>`;
     this.mode = 'itrans';
     this.rawBuffer = '';
     this.bufferStart = null;
-    this.autoExpand = false;
+    this.autoExpand = true;
     this.input = this.querySelector('textarea');
     this.querySelector('[data-target-select]').value = pageTarget;
     this.querySelector('[data-font-select]').value = pageFont;
@@ -75,6 +75,7 @@ export class ITranslatorTextarea extends HTMLElement {
       this.autoExpand = event.target.checked;
       if (this.autoExpand) this.adjustHeight(); else this.input.style.height = '';
     });
+    this.querySelector('[data-resize-handle]').addEventListener('pointerdown', event => this.startManualResize(event));
     this.querySelector('[data-copy]').addEventListener('click', async () => {
       this.flushBuffer();
       await navigator.clipboard.writeText(this.input.value);
@@ -85,6 +86,7 @@ export class ITranslatorTextarea extends HTMLElement {
     this.input.addEventListener('input', () => this.adjustHeight());
     this.input.addEventListener('paste', event => this.handlePaste(event));
     this.input.addEventListener('blur', () => this.flushBuffer());
+    this.adjustHeight();
   }
 
   get transliterate() { return createTransliterator(pageConfig, this.mode === 'roman' ? 'sanskrit-iast' : pageTarget); }
@@ -104,6 +106,25 @@ export class ITranslatorTextarea extends HTMLElement {
     if (!this.autoExpand) return;
     this.input.style.height = 'auto';
     this.input.style.height = `${Math.max(this.input.scrollHeight, 110)}px`;
+  }
+
+  startManualResize(event) {
+    event.preventDefault();
+    const startY = event.clientY;
+    const startHeight = this.input.getBoundingClientRect().height;
+    const minHeight = parseFloat(getComputedStyle(this.input).minHeight);
+    const toggle = this.querySelector('[data-auto-expand]');
+    this.autoExpand = false;
+    toggle.checked = false;
+    const resize = move => {
+      this.input.style.height = `${Math.max(minHeight, startHeight + move.clientY - startY)}px`;
+    };
+    const finish = () => {
+      window.removeEventListener('pointermove', resize);
+      window.removeEventListener('pointerup', finish);
+    };
+    window.addEventListener('pointermove', resize);
+    window.addEventListener('pointerup', finish, { once: true });
   }
 
   updateModeIndicator() {
