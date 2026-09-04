@@ -26,6 +26,8 @@ test('creates supported southern Indic scripts', () => {
 });
 test('forms basic consonant-vowel syllables', () => {
   assert.equal(transliterate('raama'), 'राम');
+  assert.equal(transliterate('kakShyaa'), 'कक्ष्या');
+  assert.equal(transliterate('kakSyaa'), 'कक्ष्या');
   assert.equal(transliterate('namaH|'), 'नमः।');
   assert.equal(transliterate('raamam '), 'रामम् ');
   assert.equal(createTransliterator(config, 'telugu')('raamam '), 'రామమ్ ');

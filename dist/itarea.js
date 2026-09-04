@@ -17,7 +17,7 @@ function createTransliterator(config, target = config.defaultTarget) {
   }
   const tokens = { ...config.tokens, ...config.aliases, ...config.punctuation };
   const keys = Object.keys(tokens).sort((a, b) => b.length - a.length);
-  const consonants = new Set(['k','kh','g','gh','~N','ch','Ch','j','jh','~n','T','Th','D','Dh','N','t','th','d','dh','n','p','ph','b','bh','m','y','r','l','v','w','sh','Sh','S','s','h','L']);
+  const consonants = new Set(['k','kh','g','gh','~N','ch','Ch','j','jh','~n','T','Th','D','Dh','N','t','th','d','dh','n','p','ph','b','bh','m','y','r','l','v','w','sh','Sh','S','s','h','L','kSh','kS']);
   const vowelMarks = { a: '', A: 'ा', aa: 'ा', i: 'ि', I: 'ी', ii: 'ी', ee: 'ी', u: 'ु', U: 'ू', uu: 'ू', e: 'े', ai: 'ै', o: 'ो', au: 'ौ', RRi: 'ृ', 'R^i': 'ृ', RRI: 'ॄ', 'R^I': 'ॄ', LLi: 'ॢ', 'L^i': 'ॢ', LLI: 'ॣ', 'L^I': 'ॣ', ...(config.vowelMarks || {}) };
   const independentVowels = new Set(Object.keys(vowelMarks));
 
