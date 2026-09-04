@@ -55,13 +55,19 @@ export class ITranslatorTextarea extends HTMLElement {
       const button = event.target.closest('button');
       if (button) this.setMode(button.dataset.mode);
     });
-    this.querySelector('[data-settings]').addEventListener('click', () => {
-      const panel = this.querySelector('.itarea__settings'); panel.hidden = !panel.hidden;
-    });
+    const settingsButton = this.querySelector('[data-settings]');
+    const settingsPanel = this.querySelector('.itarea__settings');
+    settingsButton.addEventListener('click', () => { settingsPanel.hidden = !settingsPanel.hidden; });
     this.closeSettingsWhenClickedOutside = event => {
-      if (!this.contains(event.target)) this.querySelector('.itarea__settings').hidden = true;
+      if (!settingsPanel.contains(event.target) && !settingsButton.contains(event.target)) settingsPanel.hidden = true;
+    };
+    this.closeSettingsOnEscape = event => {
+      if (event.key === 'Escape' && !settingsPanel.hidden) {
+        event.preventDefault(); event.stopPropagation(); settingsPanel.hidden = true;
+      }
     };
     document.addEventListener('click', this.closeSettingsWhenClickedOutside);
+    document.addEventListener('keydown', this.closeSettingsOnEscape, true);
     this.querySelector('[data-target-select]').addEventListener('change', event => setITranslatorTarget(event.target.value));
     this.querySelector('[data-font-select]').addEventListener('change', event => setITranslatorFont(event.target.value));
     this.querySelector('[data-copy]').addEventListener('click', async () => {
@@ -79,6 +85,7 @@ export class ITranslatorTextarea extends HTMLElement {
 
   disconnectedCallback() {
     document.removeEventListener('click', this.closeSettingsWhenClickedOutside);
+    document.removeEventListener('keydown', this.closeSettingsOnEscape, true);
   }
 
   applyFont() {
