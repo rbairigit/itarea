@@ -7,6 +7,7 @@
 .itarea { position: relative; margin: 1rem 0; color: #29241c; font: 16px/1.5 system-ui, sans-serif; }
 .itarea label { font-weight: 400; }
 .itarea__bar { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin: .65rem 0 0 4px; }
+.itarea__bar[hidden], .itarea__mode-tab[hidden] { display: none !important; }
 .itarea__font-size-control { display: flex; align-items: center; gap: .25rem; margin-left: .25rem; font-size: .875rem; white-space: nowrap; }
 .itarea__font-size-control input[type="range"] { width: 100px; accent-color: #774b0a; }
 .itarea__font-size-control input[type="number"] { box-sizing: content-box; width: 2ch; padding: .2rem; border: 1px solid #bcae98; border-radius: .3rem; font: inherit; appearance: textfield; }
