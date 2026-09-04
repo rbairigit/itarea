@@ -37,6 +37,11 @@
 .itarea__help-overlay[hidden] { display: none; }
 .itarea__help { position: relative; box-sizing: border-box; width: min(34rem, 100%); max-height: min(36rem, calc(100vh - 2rem)); overflow: auto; padding: 1.4rem 1.7rem; border-radius: .7rem; background: #fff; color: #29241c; box-shadow: 0 12px 36px #0005; }
 .itarea__help h2 { margin: 0 2rem .7rem 0; font-size: 1.2rem; }
+.itarea__help h3 { margin: 1.4rem 0 .35rem; font-size: 1rem; }
+.itarea__help p { margin: .35rem 0 .7rem; }
+.itarea__mapping-table { width: 100%; border-collapse: collapse; }
+.itarea__mapping-table th, .itarea__mapping-table td { padding: .25rem .4rem; border-top: 1px solid #e5ddd0; text-align: left; }
+.itarea__mapping-table code { padding: .05rem .25rem; border-radius: .2rem; background: #eee8db; }
 .itarea__help ul { margin: 0; padding-left: 1.2rem; }
 .itarea__help li + li { margin-top: .55rem; }
 .itarea button.itarea__help-close { position: absolute; top: .55rem; right: .55rem; width: 2rem; height: 2rem; padding: 0; border: 0; border-radius: .35rem; background: transparent; font-size: 1.5rem; line-height: 1; }
