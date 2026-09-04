@@ -6,7 +6,10 @@
 @font-face { font-family: "ITArea Chandas"; src: url("../fonts/Chandas_Font.ttf") format("truetype"); font-display: swap; }
 .itarea { position: relative; margin: 1rem 0; color: #29241c; font: 16px/1.5 system-ui, sans-serif; }
 .itarea label { font-weight: 400; }
-.itarea__bar { display: flex; gap: .4rem; margin: .65rem 0 0 4px; }
+.itarea__bar { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin: .65rem 0 0 4px; }
+.itarea__font-size-control { display: flex; align-items: center; gap: .25rem; margin-left: .25rem; font-size: .875rem; white-space: nowrap; }
+.itarea__font-size-control input[type="range"] { width: 100px; }
+.itarea__font-size-control input[type="number"] { width: 3.2rem; padding: .2rem; border: 1px solid #bcae98; border-radius: .3rem; font: inherit; }
 .itarea button { border: 1px solid #bcae98; border-radius: .4rem; padding: .35rem .7rem; background: #fff; color: inherit; font: inherit; cursor: pointer; }
 .itarea button.active { background: #774b0a; color: #fff; }
 .itarea__editor { position: relative; margin-top: 0; }

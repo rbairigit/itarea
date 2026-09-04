@@ -92,6 +92,8 @@ does so and can be opened directly from disk.
   and English can be mixed in a single text area.
 - Each widget keeps its own target language, font, and text size. The settings
   menu can optionally apply those changes to every widget on the page.
+- A 14–48px text-size slider beside the mode buttons provides quick adjustment;
+  its number field can also be edited directly.
 - English mode leaves the input unchanged.
 - `Ctrl+S` or `Ctrl+I` selects iTrans mode. `Ctrl+E`, `Ctrl+O`, or `Escape`
   selects English mode.
