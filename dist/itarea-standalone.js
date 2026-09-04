@@ -101,10 +101,11 @@ class ITranslatorTextarea extends HTMLElement {
       .map(([id, target]) => `<option value="${id}">${target.label}</option>`).join('');
     const fonts = Object.entries(pageConfig.fonts?.options || { system: { label: 'System default' } })
       .map(([id, font]) => `<option value="${id}">${font.label}</option>`).join('');
-    this.innerHTML = `<section class="itarea"><div class="itarea__bar"><button type="button" data-mode="itrans" class="active">iTrans</button><button type="button" data-mode="roman">Roman (IAST)</button><button type="button" data-mode="english">English</button></div><div class="itarea__editor"><textarea spellcheck="false" aria-label="${label}" placeholder="Type Sanskrit with ITRANS"></textarea><span class="itarea__mode-tab"><span data-mode-indicator></span><button type="button" class="itarea__tab-settings" data-settings title="Target language settings" aria-label="Target language settings">${settingsIcon}</button></span><div class="itarea__actions"><button type="button" class="itarea__icon" data-copy title="Copy text" aria-label="Copy text">${copyIcon}</button></div><div class="itarea__settings" hidden><label>Target language <select data-target-select>${targets}</select></label><label>Font <select data-font-select>${fonts}</select></label></div></div></section>`;
+    this.innerHTML = `<section class="itarea"><div class="itarea__bar"><button type="button" data-mode="itrans" class="active">iTrans</button><button type="button" data-mode="roman">Roman (IAST)</button><button type="button" data-mode="english">English</button></div><div class="itarea__editor"><textarea spellcheck="false" aria-label="${label}" placeholder="Type Sanskrit with ITRANS"></textarea><span class="itarea__mode-tab"><span data-mode-indicator></span><button type="button" class="itarea__tab-settings" data-settings title="Target language settings" aria-label="Target language settings">${settingsIcon}</button></span><div class="itarea__actions"><button type="button" class="itarea__icon" data-copy title="Copy text" aria-label="Copy text">${copyIcon}</button></div><div class="itarea__settings" hidden><label>Target language <select data-target-select>${targets}</select></label><label>Font <select data-font-select>${fonts}</select></label><label class="itarea__auto-expand">Auto-expand <input type="checkbox" data-auto-expand></label></div></div></section>`;
     this.mode = 'itrans';
     this.rawBuffer = '';
     this.bufferStart = null;
+    this.autoExpand = false;
     this.input = this.querySelector('textarea');
     this.querySelector('[data-target-select]').value = pageTarget;
     this.querySelector('[data-font-select]').value = pageFont;
@@ -129,6 +130,10 @@ class ITranslatorTextarea extends HTMLElement {
     document.addEventListener('keydown', this.closeSettingsOnEscape, true);
     this.querySelector('[data-target-select]').addEventListener('change', event => setITranslatorTarget(event.target.value));
     this.querySelector('[data-font-select]').addEventListener('change', event => setITranslatorFont(event.target.value));
+    this.querySelector('[data-auto-expand]').addEventListener('change', event => {
+      this.autoExpand = event.target.checked;
+      if (this.autoExpand) this.adjustHeight(); else this.input.style.height = '';
+    });
     this.querySelector('[data-copy]').addEventListener('click', async () => {
       this.flushBuffer();
       await navigator.clipboard.writeText(this.input.value);
@@ -136,6 +141,7 @@ class ITranslatorTextarea extends HTMLElement {
       button.textContent = '✓'; setTimeout(() => { button.innerHTML = original; }, 1200);
     });
     this.input.addEventListener('keydown', event => this.handleKeydown(event));
+    this.input.addEventListener('input', () => this.adjustHeight());
     this.input.addEventListener('paste', event => this.handlePaste(event));
     this.input.addEventListener('blur', () => this.flushBuffer());
   }
@@ -151,6 +157,12 @@ class ITranslatorTextarea extends HTMLElement {
     const family = pageConfig.fonts?.options?.[pageFont]?.family || 'system-ui';
     const cssFamily = family === 'system-ui' ? 'system-ui' : `"${family}"`;
     this.style.setProperty('--itarea-font-family', `${cssFamily}, system-ui, sans-serif`);
+  }
+
+  adjustHeight() {
+    if (!this.autoExpand) return;
+    this.input.style.height = 'auto';
+    this.input.style.height = `${Math.max(this.input.scrollHeight, 110)}px`;
   }
 
   updateModeIndicator() {
@@ -212,12 +224,14 @@ class ITranslatorTextarea extends HTMLElement {
     this.flushBuffer();
     const start = this.input.selectionStart;
     this.input.setRangeText(this.transliterate(text), start, this.input.selectionEnd, 'end');
+    this.adjustHeight();
   }
 
   replaceBuffer() {
     const rendered = this.transliterate(this.rawBuffer);
     const end = this.input.selectionEnd;
     this.input.setRangeText(rendered, this.bufferStart, end, 'end');
+    this.adjustHeight();
   }
 
   flushBuffer() {
