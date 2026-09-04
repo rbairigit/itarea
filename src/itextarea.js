@@ -161,7 +161,7 @@ export class ITranslatorTextarea extends HTMLElement {
     if (event.ctrlKey && event.key.toLowerCase() === 'r') {
       event.preventDefault(); this.setMode('roman'); return;
     }
-    if (this.mode !== 'itrans') return;
+    if (this.mode === 'english') return;
     if (event.key === 'Backspace' && this.rawBuffer) {
       event.preventDefault(); this.rawBuffer = this.rawBuffer.slice(0, -1); this.replaceBuffer(); return;
     }
@@ -179,7 +179,7 @@ export class ITranslatorTextarea extends HTMLElement {
   }
 
   handlePaste(event) {
-    if (this.mode !== 'itrans') return;
+    if (this.mode === 'english') return;
     const text = event.clipboardData?.getData('text/plain');
     if (text === undefined) return;
     event.preventDefault();
