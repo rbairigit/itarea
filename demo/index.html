@@ -38,6 +38,14 @@
 
   <h2>Using the widget in another page</h2>
   <p>Run <code>npm run build</code> in the project folder, then copy the complete <code>dist/</code> folder into your website. There are two supported ways to use it.</p>
+  <h3>Use directly from the public repository</h3>
+  <p>For a page with internet access, load the pinned standalone release from the public repository. Keep the same version in both URLs; change it only when you intentionally upgrade.</p>
+  <pre>&lt;link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.0.1/dist/itarea.css"&gt;
+
+&lt;script src="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.0.1/dist/itarea-standalone.js"&gt;&lt;/script&gt;
+
+&lt;i-translator-textarea label="Sanskrit text"&gt;&lt;/i-translator-textarea&gt;</pre>
   <h3>Hosted page or local web server</h3>
   <p>For a site served over HTTP(S), use the editable JSON configuration. For example, if the folder is copied to <code>/assets/itarea/</code>:</p>
   <pre>&lt;link rel="stylesheet" href="/assets/itarea/itarea.css"&gt;

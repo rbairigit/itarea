@@ -27,6 +27,24 @@ Run `npm run build`. This creates the portable `dist/` folder:
 Copy that entire folder into any website. There are two supported integration
 options.
 
+### Use directly from the public repository
+
+For a website with internet access, no download is necessary. Load the
+standalone widget and stylesheet from the public repository through jsDelivr:
+
+```html
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.0.1/dist/itarea.css">
+
+<script src="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.0.1/dist/itarea-standalone.js"></script>
+
+<i-translator-textarea label="Sanskrit text"></i-translator-textarea>
+```
+
+The version is pinned deliberately. This keeps a page stable even when a newer
+widget release is published. Change the version in both URLs when you choose
+to upgrade.
+
 ### Hosted page or local web server
 
 For a site served through HTTP(S), use the editable JSON configuration. This
