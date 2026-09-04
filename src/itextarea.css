@@ -6,7 +6,7 @@
 @font-face { font-family: "ITArea Chandas"; src: url("../fonts/Chandas_Font.ttf") format("truetype"); font-display: swap; }
 .itarea { position: relative; margin: 1rem 0; color: #29241c; font: 16px/1.5 system-ui, sans-serif; }
 .itarea label { font-weight: 700; }
-.itarea__bar { display: flex; gap: .4rem; margin: .65rem 0 0; }
+.itarea__bar { display: flex; gap: .4rem; margin: .65rem 0 0 8px; }
 .itarea button { border: 1px solid #bcae98; border-radius: .4rem; padding: .35rem .7rem; background: #fff; color: inherit; font: inherit; cursor: pointer; }
 .itarea button.active { background: #774b0a; color: #fff; }
 .itarea__editor { position: relative; margin-top: 0; }
@@ -21,7 +21,7 @@
 .itarea__settings label { display: block; font-size: .85rem; }
 .itarea__settings label + label { margin-top: .4rem; }
 .itarea__settings select { margin-left: .35rem; font: inherit; }
-.itarea__mode-tab { position: absolute; top: -20px; right: .55rem; z-index: 1; display: flex; align-items: center; gap: .25rem; padding: 2px 3px 2px 8px; border: 1px solid #bcae98; border-bottom: 0; border-radius: .4rem .4rem 0 0; background: #fffdf8; color: #5d5d5d; font: 700 11px/1.2 system-ui, sans-serif; }
-.itarea button.itarea__tab-settings { display: grid; place-items: center; width: 18px; height: 18px; margin: 0; padding: 0; border: 0; border-radius: .25rem; background: transparent; color: #8a8a8a; cursor: pointer; }
-.itarea button.itarea__tab-settings svg { display: block; width: 14px; height: 14px; fill: currentColor; }
+.itarea__mode-tab { position: absolute; top: -36px; right: .55rem; z-index: 1; display: flex; box-sizing: border-box; align-items: center; gap: .3rem; height: 36px; padding: 0 4px 0 10px; border: 1px solid #bcae98; border-bottom: 0; border-radius: .4rem .4rem 0 0; background: #fffdf8; color: #5d5d5d; font: 700 14px/1.2 system-ui, sans-serif; }
+.itarea button.itarea__tab-settings { display: grid; place-items: center; width: 28px; height: 28px; margin: 0; padding: 0; border: 0; border-radius: .3rem; background: transparent; color: #8a8a8a; cursor: pointer; }
+.itarea button.itarea__tab-settings svg { display: block; width: 20px; height: 20px; fill: currentColor; }
 .itarea button.itarea__tab-settings:hover, .itarea button.itarea__tab-settings:focus-visible { background: #e8e8e8; color: #4d4d4d; outline: 0; }
