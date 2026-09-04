@@ -16,6 +16,8 @@ Run `npm run build`. This creates the portable `dist/` folder:
   transliteration engine.
 - `dist/itarea.css` — the widget’s ready-to-use appearance.
 - `dist/itrans-config.json` — editable mappings and target-language settings.
+- `dist/itrans-config.js` — the same configuration as a JavaScript module, for
+  pages opened directly from disk.
 - `dist/fonts/` — bundled Sanskrit fonts and their SIL Open Font Licenses.
 
 Copy that entire folder into any website and add the following to its HTML
@@ -51,9 +53,10 @@ the selection from JavaScript, import and call `setITranslatorFont()`:
 setITranslatorFont('tiro-devanagari-sanskrit');
 ```
 
-Use a local web server when testing this integration. Browsers deliberately
-block `fetch()` of JSON from a `file://` page. The standalone demo remains an
-exception because it embeds its configuration directly.
+Use a local web server when testing the JSON-based integration above. Browsers
+deliberately block `fetch()` of JSON from a `file://` page. The included
+`sample/index.html` instead imports `itrans-config.js`, so it also works when
+opened directly from disk.
 
 ## Current prototype
 

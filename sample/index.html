@@ -14,8 +14,8 @@
     <div id="widget"></div>
     <script type="module">
       import { configureITranslator } from '../dist/itarea.js';
+      import config from '../dist/itrans-config.js';
 
-      const config = await fetch('../dist/itrans-config.json').then((response) => response.json());
       configureITranslator(config);
       document.querySelector('#widget').innerHTML = '<i-translator-textarea label="Sanskrit text"></i-translator-textarea>';
     </script>
