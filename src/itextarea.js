@@ -51,7 +51,7 @@ export class ITranslatorTextarea extends HTMLElement {
       .map(([id, target]) => `<option value="${id}">${target.label}</option>`).join('');
     const fonts = Object.entries(pageConfig.fonts?.options || { system: { label: 'System default' } })
       .map(([id, font]) => `<option value="${id}">${font.label}</option>`).join('');
-    this.innerHTML = `<section class="itarea"><div class="itarea__bar"><button type="button" data-mode="itrans" class="active">iTrans</button><button type="button" data-mode="roman">Roman (IAST)</button><button type="button" data-mode="english">English</button><label class="itarea__font-size-control">Text size <input type="range" data-font-size-range min="${MIN_FONT_SIZE}" max="${MAX_FONT_SIZE}" value="18" aria-label="Text size"><input type="number" data-font-size-value min="${MIN_FONT_SIZE}" max="${MAX_FONT_SIZE}" value="18" aria-label="Text size in pixels">px</label></div><div class="itarea__editor"><textarea spellcheck="false" aria-label="${label}" placeholder="Type Sanskrit with ITRANS"></textarea><div class="itarea__resize-handle" data-resize-handle title="Drag to resize text area" aria-label="Drag to resize text area" role="separator"></div><span class="itarea__mode-tab"><span data-mode-indicator></span><button type="button" class="itarea__tab-settings" data-settings title="Target language settings" aria-label="Target language settings">${settingsIcon}</button></span><div class="itarea__actions"><button type="button" class="itarea__icon" data-copy title="Copy text" aria-label="Copy text">${copyIcon}</button></div><div class="itarea__settings" hidden><label>Target language <select data-target-select>${targets}</select></label><label>Font <select data-font-select>${fonts}</select></label><label class="itarea__auto-expand">Auto-expand <input type="checkbox" data-auto-expand checked></label><label class="itarea__global-settings">Apply target, font, and size globally <input type="checkbox" data-apply-globally></label></div></div></section>`;
+    this.innerHTML = `<section class="itarea"><div class="itarea__bar"><button type="button" data-mode="itrans" class="active">iTrans</button><button type="button" data-mode="roman">Roman (IAST)</button><button type="button" data-mode="english">English</button><label class="itarea__font-size-control">Text size <input type="range" data-font-size-range min="${MIN_FONT_SIZE}" max="${MAX_FONT_SIZE}" value="18" aria-label="Text size"><input type="number" data-font-size-value min="${MIN_FONT_SIZE}" max="${MAX_FONT_SIZE}" value="18" aria-label="Text size in pixels">px</label></div><div class="itarea__editor"><textarea spellcheck="false" aria-label="${label}" placeholder="Type Sanskrit with ITRANS"></textarea><div class="itarea__resize-handle" data-resize-handle title="Drag to resize text area" aria-label="Drag to resize text area" role="separator"></div><span class="itarea__mode-tab"><span data-mode-indicator></span><button type="button" class="itarea__tab-settings" data-settings title="Language settings" aria-label="Language settings">${settingsIcon}</button></span><div class="itarea__actions"><button type="button" class="itarea__icon" data-copy title="Copy text" aria-label="Copy text">${copyIcon}</button></div><div class="itarea__settings" hidden><label>Language <select data-target-select>${targets}</select></label><label>Font <select data-font-select>${fonts}</select></label><label class="itarea__auto-expand">Auto-expand <input type="checkbox" data-auto-expand checked></label><label class="itarea__global-settings">Apply lang, font, size globally <input type="checkbox" data-apply-globally></label></div></div></section>`;
     this.mode = 'itrans';
     this.rawBuffer = '';
     this.bufferStart = null;
@@ -84,6 +84,13 @@ export class ITranslatorTextarea extends HTMLElement {
     document.addEventListener('click', this.closeSettingsWhenClickedOutside);
     document.addEventListener('keydown', this.closeSettingsOnEscape, true);
     const applyGlobally = this.querySelector('[data-apply-globally]');
+    applyGlobally.addEventListener('change', () => {
+      if (applyGlobally.checked) {
+        setITranslatorTarget(this.target);
+        setITranslatorFont(this.font);
+        setITranslatorFontSize(this.fontSize);
+      }
+    });
     this.querySelector('[data-target-select]').addEventListener('change', event => {
       if (applyGlobally.checked) setITranslatorTarget(event.target.value); else this.setTarget(event.target.value);
     });
