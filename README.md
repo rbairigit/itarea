@@ -90,6 +90,8 @@ does so and can be opened directly from disk.
   standard `RRi`/`R^i` and `RRI`/`R^I` forms.
 - ITRANS input is replaced in place by the configured target script, so Sanskrit
   and English can be mixed in a single text area.
+- Each widget keeps its own target language and font setting. The settings menu
+  can optionally apply either of those changes to every widget on the page.
 - English mode leaves the input unchanged.
 - `Ctrl+S` or `Ctrl+I` selects iTrans mode. `Ctrl+E`, `Ctrl+O`, or `Escape`
   selects English mode.
