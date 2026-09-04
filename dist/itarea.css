@@ -6,10 +6,10 @@
 @font-face { font-family: "ITArea Chandas"; src: url("./fonts/Chandas_Font.ttf") format("truetype"); font-display: swap; }
 .itarea { position: relative; margin: 1rem 0; color: #29241c; font: 16px/1.5 system-ui, sans-serif; }
 .itarea label { font-weight: 700; }
-.itarea__bar { display: flex; gap: .4rem; margin: .65rem 0; }
+.itarea__bar { display: flex; gap: .4rem; margin: .65rem 0 0; }
 .itarea button { border: 1px solid #bcae98; border-radius: .4rem; padding: .35rem .7rem; background: #fff; color: inherit; font: inherit; cursor: pointer; }
 .itarea button.active { background: #774b0a; color: #fff; }
-.itarea__editor { position: relative; margin-top: 1.4rem; }
+.itarea__editor { position: relative; margin-top: 0; }
 .itarea textarea { position: relative; z-index: 2; display: block; box-sizing: border-box; width: 100%; min-height: 110px; padding: .75rem 6.2rem .75rem .75rem; border: 1px solid #bcae98; border-radius: .5rem; background: #fff; color: inherit; font: 1.1rem/1.5 var(--itarea-font-family, "ITArea Noto Sans Devanagari", "Noto Sans Devanagari", system-ui, sans-serif); }
 .itarea textarea.itarea__english { background: #e5e5e5; }
 .itarea textarea.itarea__roman { background: #e1f3df; }
