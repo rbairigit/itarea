@@ -70,6 +70,7 @@ export class ITranslatorTextarea extends HTMLElement {
       controlsToggle.setAttribute('aria-label', controlsToggle.title);
     };
     controlsToggle.addEventListener('click', () => setControlsVisible(controlBar.hidden));
+    setControlsVisible(false);
     this.mode = 'itrans';
     this.rawBuffer = '';
     this.bufferStart = null;

@@ -3,7 +3,7 @@
 `itarea` is a browser-native, configurable ITRANS input widget. It provides an
 ITRANS input mode (the default) and an English mode in the same text area.
 
-Current stable release: **1.0.3**.
+Current stable release: **1.0.4**.
 
 ## Quick start
 
@@ -34,9 +34,9 @@ standalone widget and stylesheet from the public repository through jsDelivr:
 
 ```html
 <link rel="stylesheet"
-      href="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.0.3/dist/itarea.css">
+      href="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.0.4/dist/itarea.css">
 
-<script src="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.0.3/dist/itarea-standalone.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.0.4/dist/itarea-standalone.js"></script>
 
 <i-translator-textarea label="Sanskrit text"></i-translator-textarea>
 ```
@@ -112,8 +112,9 @@ does so and can be opened directly from disk.
   menu can optionally apply those changes to every widget on the page.
 - A 14–48px text-size slider beside the mode buttons provides quick adjustment;
   its number field can also be edited directly.
-- The paired unfold control below Copy hides or restores the controls above the
-  text area, while leaving Copy available.
+- The paired unfold control below Copy restores or hides the controls above the
+  text area. Widgets start in compact mode, with the top controls hidden and
+  Copy still available.
 - English mode leaves the input unchanged.
 - `Ctrl+S` or `Ctrl+I` selects iTrans mode. `Ctrl+E`, `Ctrl+O`, or `Escape`
   selects English mode.
