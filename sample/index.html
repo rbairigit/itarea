@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>iTranslator Text Area — Sample</title>
+    <link rel="stylesheet" href="../dist/itarea.css">
+    <style>
+      body { max-width: 760px; margin: 3rem auto; padding: 0 1rem; font: 16px/1.5 system-ui, sans-serif; color: #29241c; }
+    </style>
+  </head>
+  <body>
+    <h1>iTranslator Text Area</h1>
+    <div id="widget"></div>
+    <script type="module">
+      import { configureITranslator } from '../dist/itarea.js';
+
+      const config = await fetch('../dist/itrans-config.json').then((response) => response.json());
+      configureITranslator(config);
+      document.querySelector('#widget').innerHTML = '<i-translator-textarea label="Sanskrit text"></i-translator-textarea>';
+    </script>
+  </body>
+</html>

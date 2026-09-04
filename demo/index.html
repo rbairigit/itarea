@@ -14,7 +14,7 @@
     @font-face{font-family:"ITArea Chandas";src:url("../fonts/Chandas_Font.ttf") format("truetype");font-display:swap}
     .itarea textarea{font-family:var(--itarea-font-family,"ITArea Noto Sans Devanagari","Noto Sans Devanagari",system-ui)!important}
     .itarea__settings label{display:block}.itarea__settings label+label{margin-top:.4rem}
-    .itarea__editor{margin-top:1.4rem}#itarea-mode-indicator{position:absolute;top:-20px;right:.55rem;z-index:3;padding:3px 8px;border:1px solid #bcae98;border-bottom:0;border-radius:.4rem .4rem 0 0;background:#fffdf8;color:#5d5d5d;box-shadow:none;font:700 11px/1.2 system-ui;pointer-events:none}
+    .itarea__editor{margin-top:1.4rem}#itarea-mode-indicator{position:absolute;top:-20px;right:.55rem;z-index:3;display:flex;align-items:center;gap:.25rem;padding:2px 3px 2px 8px;border:1px solid #bcae98;border-bottom:0;border-radius:.4rem .4rem 0 0;background:#fffdf8;color:#5d5d5d;box-shadow:none;font:700 11px/1.2 system-ui}.itarea button.itarea__tab-settings{display:grid;place-items:center;width:18px;height:18px;margin:0;padding:0!important;border:0;background:transparent!important;color:#8a8a8a;cursor:pointer}.itarea button.itarea__tab-settings svg{display:block;width:14px;height:14px;fill:currentColor}.itarea button.itarea__tab-settings:hover,.itarea button.itarea__tab-settings:focus-visible{background:#e8e8e8!important;color:#4d4d4d;outline:0}
   </style>
 </head>
 <body>
@@ -89,6 +89,17 @@
     widget.replace=function(){const convert=this.mode==='roman'?romanize:targetTransliterate;this.input.setRangeText(convert(this.rawBuffer),this.bufferStart,this.input.selectionEnd,'end')};
     widget.paste=function(e){if(this.mode==='english')return;const text=e.clipboardData?.getData('text/plain');if(text===undefined)return;e.preventDefault();this.flush();const convert=this.mode==='roman'?romanize:targetTransliterate;this.input.setRangeText(convert(text),this.input.selectionStart,this.input.selectionEnd,'end')};
     widget.key=function(e){if(e.ctrlKey&&['s','i'].includes(e.key.toLowerCase())){e.preventDefault();this.setMode('itrans');return}if(e.ctrlKey&&e.key.toLowerCase()==='r'){e.preventDefault();this.setMode('roman');return}if((e.ctrlKey&&['e','o'].includes(e.key.toLowerCase()))||e.key==='Escape'){e.preventDefault();this.setMode('english');return}if(this.mode==='english')return;if(e.key==='Backspace'&&this.rawBuffer){e.preventDefault();this.rawBuffer=this.rawBuffer.slice(0,-1);this.replace();return}if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End','Delete'].includes(e.key)){this.flush();return}if(e.key.length===1&&!e.metaKey&&!e.altKey){e.preventDefault();if(this.bufferStart===null)this.bufferStart=this.input.selectionStart;this.rawBuffer+=e.key;this.replace()}else if(e.key==='Enter'||e.key==='Tab')this.flush()};
+    // Keep settings with the mode tab; the copy action remains inside the editor.
+    const modeLabel=document.createElement('span');
+    modeLabel.dataset.modeIndicator='';
+    modeLabel.textContent=modeIndicator.textContent;
+    modeIndicator.textContent='';
+    settingsButton.classList.remove('itarea__icon');
+    settingsButton.classList.add('itarea__tab-settings');
+    modeIndicator.append(modeLabel,settingsButton);
+    widget.updateModeIndicator=function(){modeLabel.textContent=this.mode==='english'?'No transliteration':this.mode==='roman'?'Roman':select.options[select.selectedIndex].text;modeIndicator.hidden=false};
+    widget.updateModeIndicator();
+
     const tables=document.querySelector('#mappingTables');
     function showMappings(title,map){const entries=Object.entries(map).sort(([a],[b])=>a.localeCompare(b));const rows=entries.map(([input,output])=>`<tr><td><code>${input}</code></td><td>${output||'—'}</td></tr>`).join('');tables.insertAdjacentHTML('beforeend',`<details><summary>${title} (${entries.length} mappings)</summary><div class="mapping-wrap"><table><thead><tr><th>ASCII input</th><th>Output</th></tr></thead><tbody>${rows}</tbody></table></div></details>`)}
     const sourceMap={...config.tokens,...config.aliases};const mapForTarget=target=>Object.fromEntries(Object.keys(sourceMap).map(key=>{const previous=demoTarget;demoTarget=target;const value=targetTransliterate(key);demoTarget=previous;return[key,value]}));

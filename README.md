@@ -88,6 +88,7 @@ complete compatibility with every historical ITRANS extension.
 - `dist/` - generated, drop-in browser package; create or refresh it with
   `npm run build`.
 - `demo/index.html` - working example and page-level controls.
+- `sample/index.html` - minimal shareable page with a heading and one widget.
 
 ## Usage
 
