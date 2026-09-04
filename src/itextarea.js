@@ -214,7 +214,7 @@ export class ITranslatorTextarea extends HTMLElement {
   setMode(mode) {
     this.flushBuffer();
     this.mode = mode;
-    this.querySelectorAll('button').forEach(button => button.classList.toggle('active', button.dataset.mode === mode));
+    this.querySelectorAll('[data-mode]').forEach(button => button.classList.toggle('active', button.dataset.mode === mode));
     this.input.classList.toggle('itarea__english', mode === 'english');
     this.input.classList.toggle('itarea__roman', mode === 'roman');
     this.input.placeholder = mode === 'english' ? 'Type English' : 'Type Sanskrit with ITRANS';
