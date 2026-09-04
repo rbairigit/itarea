@@ -21,10 +21,12 @@
 .itarea__resize-handle { position: absolute; right: 0; bottom: -4px; left: 0; z-index: 3; height: 8px; cursor: ns-resize; touch-action: none; }
 .itarea textarea.itarea__english { background: #e5e5e5; }
 .itarea textarea.itarea__roman { background: #e1f3df; }
-.itarea__actions { position: absolute; top: .55rem; right: .55rem; z-index: 2; display: flex; gap: .15rem; }
+.itarea__actions { position: absolute; top: .55rem; right: .55rem; z-index: 2; display: flex; flex-direction: column; gap: .15rem; }
 .itarea button.itarea__icon { display: grid; place-items: center; box-sizing: border-box; flex: 0 0 32px; width: 32px; height: 32px; padding: 0; border: 0; border-radius: .4rem; background: transparent; color: #8a8a8a; line-height: 1; transition: background .15s, color .15s; }
 .itarea button.itarea__icon svg { display: block; width: 20px; height: 20px; fill: currentColor; }
 .itarea button.itarea__icon:hover, .itarea button.itarea__icon:focus-visible { background: #e8e8e8; color: #4d4d4d; outline: 0; }
+.itarea button.itarea__controls-toggle { color: #774b0a; }
+.itarea button.itarea__controls-toggle:hover, .itarea button.itarea__controls-toggle:focus-visible { color: #5d3907; }
 .itarea__settings { position: absolute; top: 3.2rem; right: .55rem; z-index: 3; padding: .45rem; border: 1px solid #bcae98; border-radius: .4rem; background: #fffdf8; box-shadow: 0 3px 12px #0003; }
 .itarea__settings label { display: block; font-size: .85rem; }
 .itarea__settings label + label { margin-top: .4rem; }
