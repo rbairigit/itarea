@@ -13,6 +13,9 @@
 .itarea__font-size-control input[type="number"]::-webkit-inner-spin-button, .itarea__font-size-control input[type="number"]::-webkit-outer-spin-button { margin: 0; appearance: none; }
 .itarea button { border: 1px solid #bcae98; border-radius: .4rem; padding: .35rem .7rem; background: #fff; color: inherit; font: inherit; cursor: pointer; }
 .itarea button.active { background: #774b0a; color: #fff; }
+.itarea button.itarea__help-button { display: grid; place-items: center; box-sizing: border-box; width: 38px; height: 38px; padding: 0; color: #774b0a; }
+.itarea button.itarea__help-button svg { display: block; width: 23px; height: 23px; fill: currentColor; }
+.itarea button.itarea__help-button:hover, .itarea button.itarea__help-button:focus-visible { background: #f4eddd; color: #5d3907; outline: 0; }
 .itarea__editor { position: relative; margin-top: 0; }
 .itarea textarea { position: relative; z-index: 2; display: block; box-sizing: border-box; width: 100%; min-height: 3.4rem; padding: .75rem 6.2rem .75rem .75rem; resize: none; overflow: auto; border: 1px solid #bcae98; border-radius: .5rem; background: #fff; color: inherit; font: var(--itarea-font-size, 1.1rem)/1.5 var(--itarea-font-family, "ITArea Noto Sans Devanagari", "Noto Sans Devanagari", system-ui, sans-serif); }
 .itarea__resize-handle { position: absolute; right: 0; bottom: -4px; left: 0; z-index: 3; height: 8px; cursor: ns-resize; touch-action: none; }
@@ -36,6 +39,6 @@
 .itarea button.itarea__help-close { position: absolute; top: .55rem; right: .55rem; width: 2rem; height: 2rem; padding: 0; border: 0; border-radius: .35rem; background: transparent; font-size: 1.5rem; line-height: 1; }
 .itarea button.itarea__help-close:hover, .itarea button.itarea__help-close:focus-visible { background: #e8e8e8; outline: 0; }
 .itarea__mode-tab { position: absolute; top: -36px; right: .55rem; z-index: 1; display: flex; box-sizing: border-box; align-items: center; gap: .3rem; height: 36px; padding: 0 4px 0 10px; border: 1px solid #bcae98; border-bottom: 0; border-radius: .4rem .4rem 0 0; background: #fff; color: inherit; font: 400 16px/1.5 system-ui, sans-serif; }
-.itarea button.itarea__tab-settings, .itarea button.itarea__tab-help { display: grid; place-items: center; width: 28px; height: 28px; margin: 0; padding: 0; border: 0; border-radius: .3rem; background: transparent; color: #774b0a; cursor: pointer; }
-.itarea button.itarea__tab-settings svg, .itarea button.itarea__tab-help svg { display: block; width: 20px; height: 20px; fill: currentColor; }
-.itarea button.itarea__tab-settings:hover, .itarea button.itarea__tab-settings:focus-visible, .itarea button.itarea__tab-help:hover, .itarea button.itarea__tab-help:focus-visible { background: #e8e8e8; color: #5d3907; outline: 0; }
+.itarea button.itarea__tab-settings { display: grid; place-items: center; width: 28px; height: 28px; margin: 0; padding: 0; border: 0; border-radius: .3rem; background: transparent; color: #774b0a; cursor: pointer; }
+.itarea button.itarea__tab-settings svg { display: block; width: 20px; height: 20px; fill: currentColor; }
+.itarea button.itarea__tab-settings:hover, .itarea button.itarea__tab-settings:focus-visible { background: #e8e8e8; color: #5d3907; outline: 0; }
