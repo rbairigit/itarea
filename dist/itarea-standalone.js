@@ -117,6 +117,10 @@ class ITranslatorTextarea extends HTMLElement {
     this.querySelector('[data-settings]').addEventListener('click', () => {
       const panel = this.querySelector('.itarea__settings'); panel.hidden = !panel.hidden;
     });
+    this.closeSettingsWhenClickedOutside = event => {
+      if (!this.contains(event.target)) this.querySelector('.itarea__settings').hidden = true;
+    };
+    document.addEventListener('click', this.closeSettingsWhenClickedOutside);
     this.querySelector('[data-target-select]').addEventListener('change', event => setITranslatorTarget(event.target.value));
     this.querySelector('[data-font-select]').addEventListener('change', event => setITranslatorFont(event.target.value));
     this.querySelector('[data-copy]').addEventListener('click', async () => {
@@ -131,6 +135,10 @@ class ITranslatorTextarea extends HTMLElement {
   }
 
   get transliterate() { return createTransliterator(pageConfig, this.mode === 'roman' ? 'sanskrit-iast' : pageTarget); }
+
+  disconnectedCallback() {
+    document.removeEventListener('click', this.closeSettingsWhenClickedOutside);
+  }
 
   applyFont() {
     const family = pageConfig.fonts?.options?.[pageFont]?.family || 'system-ui';
@@ -159,6 +167,10 @@ class ITranslatorTextarea extends HTMLElement {
   }
 
   handleKeydown(event) {
+    const settings = this.querySelector('.itarea__settings');
+    if (event.key === 'Escape' && !settings.hidden) {
+      event.preventDefault(); settings.hidden = true; return;
+    }
     if (event.ctrlKey && ['s', 'i'].includes(event.key.toLowerCase())) {
       event.preventDefault(); this.setMode('itrans'); return;
     }
