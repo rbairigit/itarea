@@ -8,7 +8,7 @@
 .itarea label { font-weight: 400; }
 .itarea__bar { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin: .65rem 0 0 4px; }
 .itarea__font-size-control { display: flex; align-items: center; gap: .25rem; margin-left: .25rem; font-size: .875rem; white-space: nowrap; }
-.itarea__font-size-control input[type="range"] { width: 100px; }
+.itarea__font-size-control input[type="range"] { width: 100px; accent-color: #774b0a; }
 .itarea__font-size-control input[type="number"] { box-sizing: content-box; width: 2ch; padding: .2rem; border: 1px solid #bcae98; border-radius: .3rem; font: inherit; appearance: textfield; }
 .itarea__font-size-control input[type="number"]::-webkit-inner-spin-button, .itarea__font-size-control input[type="number"]::-webkit-outer-spin-button { margin: 0; appearance: none; }
 .itarea button { border: 1px solid #bcae98; border-radius: .4rem; padding: .35rem .7rem; background: #fff; color: inherit; font: inherit; cursor: pointer; }
@@ -18,7 +18,7 @@
 .itarea__resize-handle { position: absolute; right: 0; bottom: -4px; left: 0; z-index: 3; height: 8px; cursor: ns-resize; touch-action: none; }
 .itarea textarea.itarea__english { background: #e5e5e5; }
 .itarea textarea.itarea__roman { background: #e1f3df; }
-.itarea__actions { position: absolute; top: .55rem; right: .55rem; z-index: 2; display: flex; gap: .15rem; }
+.itarea__actions { position: absolute; top: .55rem; right: .55rem; z-index: 2; display: flex; flex-direction: column; gap: .15rem; }
 .itarea button.itarea__icon { display: grid; place-items: center; box-sizing: border-box; flex: 0 0 32px; width: 32px; height: 32px; padding: 0; border: 0; border-radius: .4rem; background: transparent; color: #8a8a8a; line-height: 1; transition: background .15s, color .15s; }
 .itarea button.itarea__icon svg { display: block; width: 20px; height: 20px; fill: currentColor; }
 .itarea button.itarea__icon:hover, .itarea button.itarea__icon:focus-visible { background: #e8e8e8; color: #4d4d4d; outline: 0; }
@@ -27,6 +27,13 @@
 .itarea__settings label + label { margin-top: .4rem; }
 .itarea__settings select { margin-left: .35rem; font: inherit; }
 .itarea__settings .itarea__auto-expand input { margin-left: .35rem; vertical-align: middle; }
+.itarea__help-overlay { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 1rem; background: #0006; }
+.itarea__help { position: relative; box-sizing: border-box; width: min(34rem, 100%); max-height: min(36rem, calc(100vh - 2rem)); overflow: auto; padding: 1.4rem 1.7rem; border-radius: .7rem; background: #fff; color: #29241c; box-shadow: 0 12px 36px #0005; }
+.itarea__help h2 { margin: 0 2rem .7rem 0; font-size: 1.2rem; }
+.itarea__help ul { margin: 0; padding-left: 1.2rem; }
+.itarea__help li + li { margin-top: .55rem; }
+.itarea button.itarea__help-close { position: absolute; top: .55rem; right: .55rem; width: 2rem; height: 2rem; padding: 0; border: 0; border-radius: .35rem; background: transparent; font-size: 1.5rem; line-height: 1; }
+.itarea button.itarea__help-close:hover, .itarea button.itarea__help-close:focus-visible { background: #e8e8e8; outline: 0; }
 .itarea__mode-tab { position: absolute; top: -36px; right: .55rem; z-index: 1; display: flex; box-sizing: border-box; align-items: center; gap: .3rem; height: 36px; padding: 0 4px 0 10px; border: 1px solid #bcae98; border-bottom: 0; border-radius: .4rem .4rem 0 0; background: #fff; color: inherit; font: 400 16px/1.5 system-ui, sans-serif; }
 .itarea button.itarea__tab-settings { display: grid; place-items: center; width: 28px; height: 28px; margin: 0; padding: 0; border: 0; border-radius: .3rem; background: transparent; color: #8a8a8a; cursor: pointer; }
 .itarea button.itarea__tab-settings svg { display: block; width: 20px; height: 20px; fill: currentColor; }

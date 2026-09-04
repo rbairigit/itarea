@@ -8,6 +8,7 @@ const MAX_FONT_SIZE = 48;
 let pageFontSize = '18px';
 const settingsIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.43 12.98c.04-.32.07-.65.07-.98s-.02-.66-.07-.98l2.11-1.65a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.61-.22l-2.49 1a7.36 7.36 0 0 0-1.69-.98L14.5 2.42A.49.49 0 0 0 14 2h-4a.49.49 0 0 0-.49.42l-.38 2.65c-.61.25-1.18.59-1.69.98l-2.49-1a.49.49 0 0 0-.61.22l-2 3.46a.5.5 0 0 0 .12.64l2.11 1.65c-.04.32-.08.65-.08.98s.03.66.08.98l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46c.12.22.38.31.61.22l2.49-1c.51.4 1.08.73 1.69.98l.38 2.65c.04.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.18-.58 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.65ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z"/></svg>';
 const copyIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1Zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2Zm0 16H8V7h11v14Z"/></svg>';
+const helpIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 18h2v-2h-2v2Zm1-16a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm0-14a4 4 0 0 0-4 4h2a2 2 0 1 1 2 2c-1.1 0-2 1.34-2 3h2c0-1.1 2-1.3 2-5a4 4 0 0 0-4-4Z"/></svg>';
 function normalizeFontSize(size) {
   const value = Math.round(Number.parseFloat(size));
   return `${Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, Number.isFinite(value) ? value : 18))}px`;
@@ -51,7 +52,7 @@ export class ITranslatorTextarea extends HTMLElement {
       .map(([id, target]) => `<option value="${id}">${target.label}</option>`).join('');
     const fonts = Object.entries(pageConfig.fonts?.options || { system: { label: 'System default' } })
       .map(([id, font]) => `<option value="${id}">${font.label}</option>`).join('');
-    this.innerHTML = `<section class="itarea"><div class="itarea__bar"><button type="button" data-mode="itrans" class="active">iTrans</button><button type="button" data-mode="roman">Roman (IAST)</button><button type="button" data-mode="english">English</button><label class="itarea__font-size-control">Text size <input type="range" data-font-size-range min="${MIN_FONT_SIZE}" max="${MAX_FONT_SIZE}" value="18" aria-label="Text size"><input type="number" data-font-size-value min="${MIN_FONT_SIZE}" max="${MAX_FONT_SIZE}" value="18" aria-label="Text size in pixels">px</label></div><div class="itarea__editor"><textarea spellcheck="false" aria-label="${label}" placeholder="Type Sanskrit with ITRANS"></textarea><div class="itarea__resize-handle" data-resize-handle title="Drag to resize text area" aria-label="Drag to resize text area" role="separator"></div><span class="itarea__mode-tab"><span data-mode-indicator></span><button type="button" class="itarea__tab-settings" data-settings title="Language settings" aria-label="Language settings">${settingsIcon}</button></span><div class="itarea__actions"><button type="button" class="itarea__icon" data-copy title="Copy text" aria-label="Copy text">${copyIcon}</button></div><div class="itarea__settings" hidden><label>Language <select data-target-select>${targets}</select></label><label>Font <select data-font-select>${fonts}</select></label><label class="itarea__auto-expand">Auto-expand <input type="checkbox" data-auto-expand checked></label><label class="itarea__global-settings">Apply lang, font, size globally <input type="checkbox" data-apply-globally></label></div></div></section>`;
+    this.innerHTML = `<section class="itarea"><div class="itarea__bar"><button type="button" data-mode="itrans" class="active">iTrans</button><button type="button" data-mode="roman">Roman (IAST)</button><button type="button" data-mode="english">English</button><label class="itarea__font-size-control">Text size <input type="range" data-font-size-range min="${MIN_FONT_SIZE}" max="${MAX_FONT_SIZE}" value="18" aria-label="Text size"><input type="number" data-font-size-value min="${MIN_FONT_SIZE}" max="${MAX_FONT_SIZE}" value="18" aria-label="Text size in pixels">px</label></div><div class="itarea__editor"><textarea spellcheck="false" aria-label="${label}" placeholder="Type Sanskrit with ITRANS"></textarea><div class="itarea__resize-handle" data-resize-handle title="Drag to resize text area" aria-label="Drag to resize text area" role="separator"></div><span class="itarea__mode-tab"><span data-mode-indicator></span><button type="button" class="itarea__tab-settings" data-settings title="Language settings" aria-label="Language settings">${settingsIcon}</button></span><div class="itarea__actions"><button type="button" class="itarea__icon" data-copy title="Copy text" aria-label="Copy text">${copyIcon}</button><button type="button" class="itarea__icon" data-help title="Widget help" aria-label="Widget help">${helpIcon}</button></div><div class="itarea__settings" hidden><label>Language <select data-target-select>${targets}</select></label><label>Font <select data-font-select>${fonts}</select></label><label class="itarea__auto-expand">Auto-expand <input type="checkbox" data-auto-expand checked></label><label class="itarea__global-settings">Apply lang, font, size globally <input type="checkbox" data-apply-globally></label></div><div class="itarea__help-overlay" data-help-dialog hidden><section class="itarea__help" role="dialog" aria-modal="true" aria-label="iTranslator Text Area help"><button type="button" class="itarea__help-close" data-help-close aria-label="Close help">×</button><h2>iTranslator Text Area</h2><ul><li><strong>iTrans:</strong> type ASCII ITRANS; use Ctrl+S or Ctrl+I.</li><li><strong>Roman:</strong> creates IAST; use Ctrl+R.</li><li><strong>English:</strong> leaves text unchanged; use Ctrl+E, Ctrl+O, or Escape.</li><li>Use the slider or number field to change text size. The settings tab changes language, font, and auto-expand.</li><li>Enable <strong>Apply lang, font, size globally</strong> to synchronize those choices across widgets.</li><li>Drag the bottom edge to set a manual height; this turns off auto-expand for that widget.</li></ul></section></div></div></section>`;
     this.mode = 'itrans';
     this.rawBuffer = '';
     this.bufferStart = null;
@@ -83,6 +84,16 @@ export class ITranslatorTextarea extends HTMLElement {
     };
     document.addEventListener('click', this.closeSettingsWhenClickedOutside);
     document.addEventListener('keydown', this.closeSettingsOnEscape, true);
+    const helpDialog = this.querySelector('[data-help-dialog]');
+    this.querySelector('[data-help]').addEventListener('click', () => { helpDialog.hidden = false; });
+    this.querySelector('[data-help-close]').addEventListener('click', () => { helpDialog.hidden = true; });
+    helpDialog.addEventListener('click', event => { if (event.target === helpDialog) helpDialog.hidden = true; });
+    this.closeHelpOnEscape = event => {
+      if (event.key === 'Escape' && !helpDialog.hidden) {
+        event.preventDefault(); event.stopPropagation(); helpDialog.hidden = true;
+      }
+    };
+    document.addEventListener('keydown', this.closeHelpOnEscape, true);
     const applyGlobally = this.querySelector('[data-apply-globally]');
     applyGlobally.addEventListener('change', () => {
       if (applyGlobally.checked) {
@@ -125,6 +136,7 @@ export class ITranslatorTextarea extends HTMLElement {
   disconnectedCallback() {
     document.removeEventListener('click', this.closeSettingsWhenClickedOutside);
     document.removeEventListener('keydown', this.closeSettingsOnEscape, true);
+    document.removeEventListener('keydown', this.closeHelpOnEscape, true);
   }
 
   applyFont() {
