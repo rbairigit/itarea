@@ -3,6 +3,8 @@
 `itarea` is a browser-native, configurable ITRANS input widget. It provides an
 ITRANS input mode (the default) and an English mode in the same text area.
 
+Current stable release: **1.0.0**.
+
 ## Quick start
 
 Open `demo/index.html` in a modern browser. No build step or network connection
