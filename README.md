@@ -24,14 +24,18 @@ Run `npm run build`. This creates the portable `dist/` folder:
   already included, suitable for `file://` pages.
 - `dist/fonts/` — bundled Sanskrit fonts and their SIL Open Font Licenses.
 
-Copy that entire folder into any website and add the following to its HTML
-file. Keep all three files together; the example assumes they are in
-`/assets/itarea/`.
+Copy that entire folder into any website. There are two supported integration
+options.
+
+### Hosted page or local web server
+
+For a site served through HTTP(S), use the editable JSON configuration. This
+example assumes the package is at `/assets/itarea/`.
 
 ```html
 <link rel="stylesheet" href="/assets/itarea/itarea.css">
 
-<i-translator-textarea label="Sanskrit text"></i-translator-textarea>
+<div id="translator"></div>
 
 <script type="module">
   import {
@@ -44,7 +48,24 @@ file. Keep all three files together; the example assumes they are in
 
   configureITranslator(config);
   setITranslatorTarget('telugu'); // Optional; Sanskrit is the default.
+
+  document.querySelector('#translator').innerHTML =
+    '<i-translator-textarea label="Sanskrit text"></i-translator-textarea>';
 </script>
+```
+
+Create widget elements only after calling `configureITranslator(config)`.
+
+### Page opened directly from disk
+
+For a `file://` page, use the standalone build, which embeds the configuration
+at build time:
+
+```html
+<link rel="stylesheet" href="../dist/itarea.css">
+<script src="../dist/itarea-standalone.js"></script>
+
+<i-translator-textarea label="Sanskrit text"></i-translator-textarea>
 ```
 
 The settings control in each widget includes a page-wide font selector. The
@@ -57,10 +78,9 @@ the selection from JavaScript, import and call `setITranslatorFont()`:
 setITranslatorFont('tiro-devanagari-sanskrit');
 ```
 
-Use a local web server when testing the JSON-based integration above. Browsers
-deliberately block `fetch()` of JSON from a `file://` page. The included
-`sample/index.html` instead uses the standalone build, so it also works when
-opened directly from disk.
+Browsers deliberately block JSON `fetch()` requests from a `file://` page. Use
+the standalone option for that situation; the included `sample/index.html`
+does so and can be opened directly from disk.
 
 ## Current prototype
 

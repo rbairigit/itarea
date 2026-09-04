@@ -34,11 +34,12 @@
   <div class="note"><strong>Custom mappings:</strong> Edit <code>config/itrans-config.json</code> when using the reusable widget in an application. This standalone page intentionally embeds the starter mapping so it can be opened with a double-click.</div>
 
   <h2>Using the widget in another page</h2>
-  <p>Run <code>npm run build</code> in the project folder. It creates a portable <code>dist/</code> folder containing <code>itarea.js</code>, <code>itarea.css</code>, and the editable <code>itrans-config.json</code>. Copy that whole folder into your website.</p>
-  <p>For example, if you copy it to <code>/assets/itarea/</code>, add this to your page:</p>
+  <p>Run <code>npm run build</code> in the project folder, then copy the complete <code>dist/</code> folder into your website. There are two supported ways to use it.</p>
+  <h3>Hosted page or local web server</h3>
+  <p>For a site served over HTTP(S), use the editable JSON configuration. For example, if the folder is copied to <code>/assets/itarea/</code>:</p>
   <pre>&lt;link rel="stylesheet" href="/assets/itarea/itarea.css"&gt;
 
-&lt;i-translator-textarea label="Sanskrit text"&gt;&lt;/i-translator-textarea&gt;
+&lt;div id="translator"&gt;&lt;/div&gt;
 
 &lt;script type="module"&gt;
   import {
@@ -51,8 +52,16 @@
 
   configureITranslator(config);
   setITranslatorTarget('telugu'); // Optional; Sanskrit is the default.
+  document.querySelector('#translator').innerHTML =
+    '&lt;i-translator-textarea label="Sanskrit text"&gt;&lt;/i-translator-textarea&gt;';
 &lt;/script&gt;</pre>
-  <div class="note"><strong>Important:</strong> Test this integration through a local web server or a hosted website. Browsers block JSON loading from a <code>file://</code> page. This demo works by double-click because it embeds its starter configuration directly.</div>
+  <div class="note"><strong>Important:</strong> Create the widget only after <code>configureITranslator(config)</code>. Browsers block JSON loading from a <code>file://</code> page, so this option needs a local web server or hosted site.</div>
+  <h3>Page opened directly from disk</h3>
+  <p>For a simple <code>file://</code> page, use the standalone build. Its configuration is embedded when you run <code>npm run build</code>:</p>
+  <pre>&lt;link rel="stylesheet" href="../dist/itarea.css"&gt;
+&lt;script src="../dist/itarea-standalone.js"&gt;&lt;/script&gt;
+
+&lt;i-translator-textarea label="Sanskrit text"&gt;&lt;/i-translator-textarea&gt;</pre>
   <h2>Configuration and custom mappings</h2>
   <p>The reusable widget reads <code>config/itrans-config.json</code>. Add normal aliases to <code>aliases</code>. If an alias is a vowel, also add its combining sign to <code>vowelMarks</code>, so it works after consonants. Add the matching IAST spelling to <code>iastTokens</code> when it should work in Roman mode too.</p>
   <pre>{
