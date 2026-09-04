@@ -9,7 +9,8 @@
 .itarea__bar { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin: .65rem 0 0 4px; }
 .itarea__font-size-control { display: flex; align-items: center; gap: .25rem; margin-left: .25rem; font-size: .875rem; white-space: nowrap; }
 .itarea__font-size-control input[type="range"] { width: 100px; }
-.itarea__font-size-control input[type="number"] { width: 3.2rem; padding: .2rem; border: 1px solid #bcae98; border-radius: .3rem; font: inherit; }
+.itarea__font-size-control input[type="number"] { box-sizing: content-box; width: 2ch; padding: .2rem; border: 1px solid #bcae98; border-radius: .3rem; font: inherit; appearance: textfield; }
+.itarea__font-size-control input[type="number"]::-webkit-inner-spin-button, .itarea__font-size-control input[type="number"]::-webkit-outer-spin-button { margin: 0; appearance: none; }
 .itarea button { border: 1px solid #bcae98; border-radius: .4rem; padding: .35rem .7rem; background: #fff; color: inherit; font: inherit; cursor: pointer; }
 .itarea button.active { background: #774b0a; color: #fff; }
 .itarea__editor { position: relative; margin-top: 0; }
