@@ -17,7 +17,7 @@ function createTransliterator(config, target = config.defaultTarget) {
   }
   const tokens = { ...config.tokens, ...config.aliases, ...config.punctuation };
   const keys = Object.keys(tokens).sort((a, b) => b.length - a.length);
-  const consonants = new Set(['k','kh','g','gh','~N','ch','Ch','j','jh','~n','T','Th','D','Dh','N','t','th','d','dh','n','p','ph','b','bh','m','y','r','l','v','w','sh','Sh','S','s','h','L','kSh','kS']);
+  const consonants = new Set(['k','kh','g','gh','~N','ch','Ch','j','jh','~n','T','Th','D','Dh','N','t','th','d','dh','n','p','ph','b','bh','m','y','r','l','v','w','sh','Sh','S','s','h','L','kSh','kS','j~n']);
   const vowelMarks = { a: '', A: 'ा', aa: 'ा', i: 'ि', I: 'ी', ii: 'ी', ee: 'ी', u: 'ु', U: 'ू', uu: 'ू', e: 'े', ai: 'ै', o: 'ो', au: 'ौ', RRi: 'ृ', 'R^i': 'ृ', RRI: 'ॄ', 'R^I': 'ॄ', LLi: 'ॢ', 'L^i': 'ॢ', LLI: 'ॣ', 'L^I': 'ॣ', ...(config.vowelMarks || {}) };
   const independentVowels = new Set(Object.keys(vowelMarks));
 
@@ -142,6 +142,10 @@ class ITranslatorTextarea extends HTMLElement {
     this.font = pageFont;
     this.fontSize = pageFontSize;
     this.input = this.querySelector('textarea');
+    if (this._initialValue !== undefined) {
+      this.input.value = this._initialValue;
+      delete this._initialValue;
+    }
     this.querySelector('[data-target-select]').value = this.target;
     this.querySelector('[data-font-select]').value = this.font;
     this.updateFontSizeControls();
@@ -357,6 +361,17 @@ class ITranslatorTextarea extends HTMLElement {
   }
 
   get value() { this.flushBuffer(); return this.input.value; }
+
+  set value(value) {
+    const text = String(value ?? '');
+    if (!this.input) {
+      this._initialValue = text;
+      return;
+    }
+    this.flushBuffer();
+    this.input.value = text;
+    this.adjustHeight();
+  }
 }
 
 customElements.define('i-translator-textarea', ITranslatorTextarea);

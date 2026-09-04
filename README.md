@@ -3,7 +3,7 @@
 `itarea` is a browser-native, configurable ITRANS input widget. It provides an
 ITRANS input mode (the default) and an English mode in the same text area.
 
-Current stable release: **1.0.7**.
+Current stable release: **1.0.8**.
 
 ## Quick start
 
@@ -34,9 +34,9 @@ standalone widget and stylesheet from the public repository through jsDelivr:
 
 ```html
 <link rel="stylesheet"
-      href="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.0.7/dist/itarea.css">
+      href="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.0.8/dist/itarea.css">
 
-<script src="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.0.7/dist/itarea-standalone.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.0.8/dist/itarea-standalone.js"></script>
 
 <i-translator-textarea label="Sanskrit text"></i-translator-textarea>
 ```

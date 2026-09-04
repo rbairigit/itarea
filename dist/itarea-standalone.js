@@ -17,7 +17,7 @@ function createTransliterator(config, target = config.defaultTarget) {
   }
   const tokens = { ...config.tokens, ...config.aliases, ...config.punctuation };
   const keys = Object.keys(tokens).sort((a, b) => b.length - a.length);
-  const consonants = new Set(['k','kh','g','gh','~N','ch','Ch','j','jh','~n','T','Th','D','Dh','N','t','th','d','dh','n','p','ph','b','bh','m','y','r','l','v','w','sh','Sh','S','s','h','L','kSh','kS']);
+  const consonants = new Set(['k','kh','g','gh','~N','ch','Ch','j','jh','~n','T','Th','D','Dh','N','t','th','d','dh','n','p','ph','b','bh','m','y','r','l','v','w','sh','Sh','S','s','h','L','kSh','kS','j~n']);
   const vowelMarks = { a: '', A: 'ा', aa: 'ा', i: 'ि', I: 'ी', ii: 'ी', ee: 'ी', u: 'ु', U: 'ू', uu: 'ू', e: 'े', ai: 'ै', o: 'ो', au: 'ौ', RRi: 'ृ', 'R^i': 'ृ', RRI: 'ॄ', 'R^I': 'ॄ', LLi: 'ॢ', 'L^i': 'ॢ', LLI: 'ॣ', 'L^I': 'ॣ', ...(config.vowelMarks || {}) };
   const independentVowels = new Set(Object.keys(vowelMarks));
 
@@ -142,6 +142,10 @@ class ITranslatorTextarea extends HTMLElement {
     this.font = pageFont;
     this.fontSize = pageFontSize;
     this.input = this.querySelector('textarea');
+    if (this._initialValue !== undefined) {
+      this.input.value = this._initialValue;
+      delete this._initialValue;
+    }
     this.querySelector('[data-target-select]').value = this.target;
     this.querySelector('[data-font-select]').value = this.font;
     this.updateFontSizeControls();
@@ -357,6 +361,17 @@ class ITranslatorTextarea extends HTMLElement {
   }
 
   get value() { this.flushBuffer(); return this.input.value; }
+
+  set value(value) {
+    const text = String(value ?? '');
+    if (!this.input) {
+      this._initialValue = text;
+      return;
+    }
+    this.flushBuffer();
+    this.input.value = text;
+    this.adjustHeight();
+  }
 }
 
 customElements.define('i-translator-textarea', ITranslatorTextarea);
@@ -424,7 +439,7 @@ configureITranslator({
     "sh": "श", "Sh": "ष", "S": "ष", "s": "स", "h": "ह", "L": "ळ",
     "M": "ं", ".m": "ं", ".n": "ं", "H": "ः", ".N": "ँ", ".h": "्", ".a": "ऽ", "OM": "ॐ", "AUM": "ॐ",
     "0": "०", "1": "१", "2": "२", "3": "३", "4": "४", "5": "५", "6": "६", "7": "७", "8": "८", "9": "९",
-    "kSh": "क्ष", "kS": "क्ष", "kSh": "क्ष", "GYa": "ज्ञ", "j~na": "ज्ञ"
+    "kSh": "क्ष", "kS": "क्ष", "kSh": "क्ष", "GYa": "ज्ञ", "j~n": "ज्ञ"
   },
   "aliases": {
     "R": "ऋ",
@@ -440,7 +455,7 @@ configureITranslator({
     "k": "k", "kh": "kh", "g": "g", "gh": "gh", "~N": "ṅ", "ch": "c", "Ch": "ch", "j": "j", "jh": "jh", "~n": "ñ",
     "T": "ṭ", "Th": "ṭh", "D": "ḍ", "Dh": "ḍh", "N": "ṇ", "t": "t", "th": "th", "d": "d", "dh": "dh", "n": "n",
     "p": "p", "ph": "ph", "b": "b", "bh": "bh", "m": "m", "y": "y", "r": "r", "l": "l", "v": "v", "w": "v", "sh": "ś", "Sh": "ṣ", "S": "ṣ", "s": "s", "h": "h", "L": "ḻ",
-    "M": "ṃ", ".m": "ṃ", ".n": "ṃ", "H": "ḥ", ".N": "m̐", ".a": "'", ".h": "", "OM": "oṃ", "AUM": "aum", "kSh": "kṣ", "kS": "kṣ", "GYa": "jñ", "j~na": "jña"
+    "M": "ṃ", ".m": "ṃ", ".n": "ṃ", "H": "ḥ", ".N": "m̐", ".a": "'", ".h": "", "OM": "oṃ", "AUM": "aum", "kSh": "kṣ", "kS": "kṣ", "GYa": "jñ", "j~n": "jñ"
     ,"0": "0", "1": "1", "2": "2", "3": "3", "4": "4", "5": "5", "6": "6", "7": "7", "8": "8", "9": "9"
   },
   "punctuation": {

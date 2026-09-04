@@ -10,6 +10,7 @@ test('uses configurable Sanskrit aliases', () => {
   assert.equal(transliterate('kRtaj~naH'), 'कृतज्ञः');
   assert.equal(transliterate('kRRitaj~naH'), 'कृतज्ञः');
   assert.equal(transliterate('kR^itaj~naH'), 'कृतज्ञः');
+  assert.equal(transliterate('vij~naana'), 'विज्ञान');
   assert.equal(transliterate('S L'), 'ष् ळ्');
   assert.equal(romanize('S L'), 'ṣ ḻ');
 });
@@ -17,6 +18,7 @@ test('creates IAST from ITRANS input', () => {
   assert.equal(romanize('kRtaj~naH'), 'kṛtajñaḥ');
   assert.equal(romanize('kRRitaj~naH'), 'kṛtajñaḥ');
   assert.equal(romanize('kR^itaj~naH'), 'kṛtajñaḥ');
+  assert.equal(romanize('vij~naana'), 'vijñāna');
 });
 test('creates supported southern Indic scripts', () => {
   assert.equal(createTransliterator(config, 'telugu')('raamaH'), 'రామః');

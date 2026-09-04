@@ -83,6 +83,10 @@ export class ITranslatorTextarea extends HTMLElement {
     this.font = pageFont;
     this.fontSize = pageFontSize;
     this.input = this.querySelector('textarea');
+    if (this._initialValue !== undefined) {
+      this.input.value = this._initialValue;
+      delete this._initialValue;
+    }
     this.querySelector('[data-target-select]').value = this.target;
     this.querySelector('[data-font-select]').value = this.font;
     this.updateFontSizeControls();
@@ -298,6 +302,17 @@ export class ITranslatorTextarea extends HTMLElement {
   }
 
   get value() { this.flushBuffer(); return this.input.value; }
+
+  set value(value) {
+    const text = String(value ?? '');
+    if (!this.input) {
+      this._initialValue = text;
+      return;
+    }
+    this.flushBuffer();
+    this.input.value = text;
+    this.adjustHeight();
+  }
 }
 
 customElements.define('i-translator-textarea', ITranslatorTextarea);
