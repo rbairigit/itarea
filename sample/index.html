@@ -11,13 +11,7 @@
   </head>
   <body>
     <h1>iTranslator Text Area</h1>
-    <div id="widget"></div>
-    <script type="module">
-      import { configureITranslator } from '../dist/itarea.js';
-      import config from '../dist/itrans-config.js';
-
-      configureITranslator(config);
-      document.querySelector('#widget').innerHTML = '<i-translator-textarea label="Sanskrit text"></i-translator-textarea>';
-    </script>
+    <script src="../dist/itarea-standalone.js"></script>
+    <i-translator-textarea label="Sanskrit text"></i-translator-textarea>
   </body>
 </html>
