@@ -3,7 +3,7 @@
 `itarea` is a browser-native, configurable ITRANS input widget. It provides an
 ITRANS input mode (the default) and an English mode in the same text area.
 
-Current stable release: **1.0.8**.
+Current stable release: **1.0.9**.
 
 ## Quick start
 
@@ -34,9 +34,9 @@ standalone widget and stylesheet from the public repository through jsDelivr:
 
 ```html
 <link rel="stylesheet"
-      href="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.0.8/dist/itarea.css">
+      href="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.0.9/dist/itarea.css">
 
-<script src="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.0.8/dist/itarea-standalone.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.0.9/dist/itarea-standalone.js"></script>
 
 <i-translator-textarea label="Sanskrit text"></i-translator-textarea>
 ```
@@ -116,11 +116,14 @@ does so and can be opened directly from disk.
   text area. Widgets start in compact mode, with the top controls hidden and
   Copy still available.
 - English mode leaves the input unchanged.
-- `Ctrl+S` or `Ctrl+I` selects iTrans mode. `Ctrl+E`, `Ctrl+O`, or `Escape`
-  selects English mode.
+- `Ctrl+S` or `Ctrl+I` toggles between iTrans and English. `Ctrl+R` toggles
+  between Roman and iTrans, while `Ctrl+O` toggles between English and iTrans.
+  `Ctrl+E` and `Escape` always select English mode.
   English mode turns the input light grey and shows a floating mode indicator.
-- `Ctrl+R` selects Roman mode, which replaces ITRANS input with IAST, such as
-  `kRtaj~naH` becoming `kṛtajñaḥ`.
+- Roman mode replaces ITRANS input with IAST, such as `kRtaj~naH` becoming
+  `kṛtajñaḥ`.
+- `Ctrl+Z` or `Ctrl+U` undoes up to 100 recent editing actions per widget.
+  `Ctrl+Shift+Z` or `Ctrl+Shift+U` redoes an undone action.
 - Supported targets are Sanskrit/Devanagari (default), Telugu, Kannada, Tamil,
   Malayalam, and Roman/IAST. The page-level target menu is populated from the
   configuration.
