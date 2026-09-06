@@ -31,6 +31,9 @@
 .itarea__settings { position: absolute; top: 3.2rem; right: .55rem; z-index: 3; padding: .45rem; border: 1px solid #bcae98; border-radius: .4rem; background: #fffdf8; box-shadow: 0 3px 12px #0003; }
 .itarea__settings label { display: block; font-size: .85rem; }
 .itarea__settings label + label { margin-top: .4rem; }
+.itarea__settings .itarea__disable-sequence { display: flex; align-items: center; gap: .3rem; white-space: nowrap; }
+.itarea__disable-sequence input[type="checkbox"] { margin: 0; }
+.itarea__disable-sequence input[type="text"] { width: 3.8ch; min-width: 3.8ch; margin-left: auto; padding: .12rem .2rem; font: inherit; text-align: center; }
 .itarea__version { margin-top: .6rem; padding-top: .45rem; border-top: 1px solid #ded7c9; color: #756b5e; font-size: .72rem; line-height: 1.35; }
 .itarea__settings select { margin-left: .35rem; font: inherit; }
 .itarea__settings .itarea__auto-expand input { margin-left: .35rem; vertical-align: middle; }

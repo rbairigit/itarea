@@ -124,6 +124,11 @@ does so and can be opened directly from disk.
   `kṛtajñaḥ`.
 - `Ctrl+Z` or `Ctrl+U` undoes up to 100 recent editing actions per widget.
   `Ctrl+Shift+Z` or `Ctrl+Shift+U` redoes an undone action.
+- The global <strong>iTrans disable seq.</strong> setting is off by default.
+  When enabled, typing its three-character sequence (default: ` = `) in iTrans
+  or Roman mode keeps the sequence and switches the remainder of that line to
+  English. Pressing Enter restores the prior transliteration mode. An explicit
+  mode shortcut cancels the temporary line override.
 - Supported targets are Sanskrit/Devanagari (default), Telugu, Kannada, Tamil,
   Malayalam, and Roman/IAST. The page-level target menu is populated from the
   configuration.
