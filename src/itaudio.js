@@ -1,6 +1,3 @@
-const AUDIO_DB = 'itarea-audio';
-const AUDIO_STORE = 'recordings';
-const AUDIO_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 const AUDIO_MAX_DURATION_MS = 5 * 60 * 1000;
 const AUDIO_HISTORY_LIMIT = 5;
 
@@ -13,58 +10,6 @@ export const audioIcons = {
 
 export function audioDialogMarkup() {
   return `<div class="itarea__audio-overlay" data-audio-dialog hidden><section class="itarea__audio-dialog" role="dialog" aria-modal="true" aria-label="Record and edit audio"><header><h2>Record and edit audio</h2><button type="button" class="itarea__audio-close" data-audio-close aria-label="Close audio editor">×</button></header><p class="itarea__audio-status" data-audio-status role="status">Ready to record.</p><div class="itarea__audio-recorder"><canvas data-live-waveform width="720" height="86" aria-label="Live recording waveform"></canvas><div class="itarea__audio-record-row"><span data-record-time>0:00 / 5:00</span><button type="button" data-start-recording>${audioIcons.record}<span>Record</span></button><button type="button" data-stop-recording disabled>${audioIcons.stop}<span>Stop</span></button></div></div><div class="itarea__audio-editor" data-audio-editor hidden><audio data-editor-player controls preload="metadata"></audio><canvas data-audio-waveform width="720" height="128" aria-label="Editable audio waveform"></canvas><div class="itarea__audio-readout"><span><strong>Duration:</strong> <span data-audio-duration>0:00</span></span><span><strong>Selection:</strong> <span data-audio-selection>No selection</span></span></div><div class="itarea__audio-tool-grid"><section><h3>Preview</h3><div><button type="button" data-play-audio>Play / Pause</button><button type="button" data-play-selection disabled>Play selection</button></div></section><section><h3>Edit selection</h3><div><button type="button" data-delete-selection disabled>Delete</button><button type="button" data-silence-selection disabled>Silence</button></div></section><section><h3>History</h3><div><button type="button" data-audio-undo disabled>Undo</button><button type="button" data-audio-redo disabled>Redo</button><button type="button" data-audio-reset disabled>Reset</button></div></section><section><h3>Insert silence</h3><label>Seconds <input type="number" data-pause-duration min="0.1" max="10" step="0.1" value="1"></label><div><button type="button" data-insert-silence="start">At start</button><button type="button" data-insert-silence="cursor">At cursor</button><button type="button" data-insert-silence="end">At end</button></div></section></div><footer><button type="button" class="primary" data-save-audio>Save audio</button><a data-download-audio download>Download</a><button type="button" class="danger" data-delete-audio>Delete saved audio</button></footer></div></section></div>`;
-}
-
-function requestResult(request) {
-  return new Promise((resolve, reject) => {
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-}
-
-function openAudioDatabase() {
-  return new Promise((resolve, reject) => {
-    if (!window.indexedDB) return reject(new Error('IndexedDB is unavailable.'));
-    const request = indexedDB.open(AUDIO_DB, 1);
-    request.onupgradeneeded = () => request.result.createObjectStore(AUDIO_STORE, { keyPath: 'key' });
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-}
-
-async function withAudioStore(mode, callback) {
-  const database = await openAudioDatabase();
-  try {
-    const transaction = database.transaction(AUDIO_STORE, mode);
-    const completed = new Promise((resolve, reject) => {
-      transaction.oncomplete = resolve;
-      transaction.onerror = () => reject(transaction.error);
-      transaction.onabort = () => reject(transaction.error);
-    });
-    const result = await callback(transaction.objectStore(AUDIO_STORE));
-    await completed;
-    return result;
-  } finally {
-    database.close();
-  }
-}
-
-async function loadAudioRecord(key) {
-  const record = await withAudioStore('readonly', store => requestResult(store.get(key)));
-  if (!record) return null;
-  if (record.expiresAt <= Date.now()) {
-    await deleteAudioRecord(key);
-    return null;
-  }
-  return record;
-}
-
-function saveAudioRecord(record) {
-  return withAudioStore('readwrite', store => requestResult(store.put(record)));
-}
-
-function deleteAudioRecord(key) {
-  return withAudioStore('readwrite', store => requestResult(store.delete(key)));
 }
 
 function formatTime(seconds, decimals = false) {
@@ -177,8 +122,6 @@ export function createAudioController(widget) {
   const saveButton = widget.querySelector('[data-save-audio]');
   const deleteSavedButton = widget.querySelector('[data-delete-audio]');
   const download = widget.querySelector('[data-download-audio]');
-  const storageId = widget.getAttribute('audio-id') || widget.id || `itarea-${Array.from(document.querySelectorAll('i-translator-textarea')).indexOf(widget) + 1}`;
-  const storageKey = `${location.href.split('#')[0]}::${storageId}`;
   let savedBlob = null; let savedDurationMs = 0; let savedText = ''; let savedUrl = null;
   let workingBlob = null; let workingBuffer = null; let originalBuffer = null; let workingUrl = null;
   let audioContext = null; let selection = null; let cursorSeconds = 0; let selectionEnd = null;
@@ -188,7 +131,7 @@ export function createAudioController(widget) {
   const outsideAudio = new Audio();
 
   const setStatus = (message, error = false) => { status.textContent = message; status.classList.toggle('error', error); };
-  const textNow = () => widget.input?.value || '';
+  const textNow = () => widget.value || '';
   const isStale = () => Boolean(savedBlob && savedText !== textNow());
   const updateOutside = () => {
     outsidePlay.disabled = !savedBlob;
@@ -242,19 +185,17 @@ export function createAudioController(widget) {
   };
   const save = async({ closeDialog = false } = {}) => {
     if (!workingBlob) return;
-    const record = { key: storageKey, blob: workingBlob, mimeType: workingBlob.type, durationMs: Math.round((workingBuffer?.duration || 0) * 1000), text: textNow(), createdAt: Date.now(), expiresAt: Date.now() + AUDIO_RETENTION_MS };
-    try { await saveAudioRecord(record); setStatus('Audio saved in this browser for 30 days.'); }
-    catch { setStatus('Audio saved for this page session; persistent browser storage was unavailable.', true); }
+    const record = { blob: workingBlob, durationMs: Math.round((workingBuffer?.duration || 0) * 1000), text: textNow() };
+    setStatus('Audio is ready for this page session. Use Save to export it.');
     savedBlob = record.blob; savedDurationMs = record.durationMs; savedText = record.text;
     revoke(savedUrl); savedUrl = URL.createObjectURL(savedBlob); updateOutside();
-    widget.dispatchEvent(new CustomEvent('audiochange', { bubbles: true, detail: { blob: savedBlob, durationMs: savedDurationMs, expiresAt: record.expiresAt } }));
+    widget.dispatchEvent(new CustomEvent('audiochange', { bubbles: true, detail: { blob: savedBlob, durationMs: savedDurationMs } }));
     if (closeDialog) {
       dialog.hidden = true;
       widget.input?.focus();
     }
   };
   const removeSaved = async() => {
-    try { await deleteAudioRecord(storageKey); } catch { /* Session state is still cleared. */ }
     savedBlob = null; savedDurationMs = 0; savedText = ''; revoke(savedUrl); savedUrl = null; updateOutside();
     outsideAudio.pause(); outsideAudio.removeAttribute('src'); outsidePlay.innerHTML = audioIcons.play;
     widget.dispatchEvent(new CustomEvent('audiochange', { bubbles: true, detail: { blob: null, durationMs: 0 } }));
@@ -378,9 +319,7 @@ export function createAudioController(widget) {
   window.addEventListener('resize', redraw);
 
   updateOutside();
-  const ready = loadAudioRecord(storageKey).then(record => {
-    if (!record || destroyed) return; savedBlob = record.blob; savedDurationMs = record.durationMs; savedText = record.text || ''; savedUrl = URL.createObjectURL(savedBlob); updateOutside();
-  }).catch(() => {});
+  const ready = Promise.resolve();
 
   const controller = {
     get blob() { return savedBlob; }, get durationMs() { return savedDurationMs; },

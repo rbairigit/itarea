@@ -37,20 +37,25 @@
       <li>Press <strong>Ctrl+E</strong> or <strong>Escape</strong> for English mode, which leaves input unchanged.</li>
       <li>Use <strong>Ctrl+Z</strong> or <strong>Ctrl+U</strong> to undo; use <strong>Ctrl+Shift+Z</strong> or <strong>Ctrl+Shift+U</strong> to redo.</li>
       <li>In Settings, enable the global <strong>iTrans disable seq.</strong> option to use <code> = </code> (or your own three-character sequence) for English text until the end of the current line.</li>
-      <li>Use the mode-tab settings to choose language, font, auto-expand, and optional page-wide settings.</li>
-      <li>Enter a font size from 14–48 in the small <strong>px</strong> field and press Enter (or leave the field) to apply it.</li>
+      <li>Use the Expand icon beside Duplicate to toggle automatic height expansion. Use the mode-tab settings to choose language and optional page-wide settings.</li>
+      <li>Use the Tags icon to add queryable name/value metadata. Every widget includes the required <code>type=rich-text-audio</code> tag, which cannot be changed or deleted.</li>
+      <li>Use the font selector beside the mode buttons to change selected text or the text typed next at the caret.</li>
+      <li>Use the responsive formatting group to format selected text: bold, italic, underline, lists, 36 preset colors or a custom color, font size, font weight, line spacing, four-character indentation, alignment, links, and remove formatting. With only a caret, font, size, color, and weight apply to what you type next. The controls wrap into additional rows when the widget is narrow.</li>
+      <li>The default style is 24px Demi. ITF Devanagari is used when installed; otherwise the bundled Noto Sans Devanagari is used automatically.</li>
       <li>Use the microphone to record up to five minutes. In the waveform editor you can preview a selection, delete or silence it, insert silence, undo/redo five audio edits, reset, save, and download.</li>
-      <li>Saved audio remains in this browser for 30 days. The Play control below Copy becomes available after saving and is marked if the associated text later changes.</li>
-      <li>Use Save to export this widget's text, language, mode, font, size, and saved audio as one <code>.itarea.zip</code> file. Use Open to restore it; the widget warns before replacing existing content.</li>
+      <li>Saved audio remains available for this page session only. Refreshing clears it unless it has been exported with Save. The Play control below Copy becomes available after saving and is marked if the associated text later changes.</li>
+      <li>A red dot on Save means text, audio, language, mode, font, or size has changed since the last export. Use New to add an empty widget below, or Duplicate to copy text and settings; audio is copied only when enabled in Settings.</li>
+      <li>Enable <strong>Resize width</strong> in Settings to show the right-edge width handle.</li>
+      <li>Use Save to export this widget's plain text, formatted HTML, language, mode, font, size, and saved audio as one <code>.itarea.zip</code> file. Use Open to restore it; the widget warns before replacing existing content.</li>
     </ol>
 
     <h2>Use the widget in another page</h2>
     <h3>Directly from the public repository</h3>
     <p>For a page with internet access, use the pinned release below. Keep the version the same in both URLs and change it only when you intentionally upgrade.</p>
     <pre>&lt;link rel="stylesheet"
-      href="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.2.0/dist/itarea.css"&gt;
+      href="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.3.0/dist/itarea.css"&gt;
 
-&lt;script src="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.2.0/dist/itarea-standalone.js"&gt;&lt;/script&gt;
+&lt;script src="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.3.0/dist/itarea-standalone.js"&gt;&lt;/script&gt;
 
 &lt;i-translator-textarea label="Sanskrit text" audio-id="lesson-1"&gt;&lt;/i-translator-textarea&gt;</pre>
 
@@ -61,13 +66,20 @@
 
 &lt;i-translator-textarea label="Sanskrit text" audio-id="lesson-1"&gt;&lt;/i-translator-textarea&gt;</pre>
 
-    <h2>Audio recording and storage</h2>
-    <p>Assign each reusable widget a unique, stable <code>audio-id</code>. Audio saved in the editor is associated with that ID and retained in this browser's IndexedDB storage for 30 days. It is not uploaded or included in the text value.</p>
-    <p>Audio can be retrieved through <code>widget.audioBlob</code> and <code>widget.audioDurationMs</code>. The widget also emits an <code>audiochange</code> event after audio is saved or deleted. Clearing browser site data, moving a local page, changing its URL, or using another browser profile can make a saved recording unavailable.</p>
+    <h2>Audio recording and saving</h2>
+    <p>Audio saved in the editor is available only for the current page session and is cleared by a refresh. It is not uploaded. Use <strong>Save</strong> to include audio with the text in an <code>.itarea.zip</code> document, or <strong>Download</strong> for a separate audio file.</p>
+    <p>Audio can be retrieved through <code>widget.audioBlob</code> and <code>widget.audioDurationMs</code>. The widget also emits an <code>audiochange</code> event after audio is saved or deleted.</p>
     <div class="note"><strong>Microphone permission:</strong> recording from a local <code>file://</code> page works in tested Chrome/macOS configurations. Other browsers may require the page to run from <code>localhost</code> or HTTPS.</div>
 
+    <h2>Saving, New, Duplicate, and width</h2>
+    <p>Text is not persisted automatically. A red dot on Save means its portable document is not current; the Save tooltip reads <strong>not saved</strong>. After a successful save it disappears and the tooltip reads <strong>Saved</strong>.</p>
+    <p>The <strong>New</strong> and <strong>Duplicate</strong> buttons appear with the expanded controls. New inherits the current language, font, and text size but begins empty. Duplicate also copies the text, mode, and auto-expand setting. It intentionally leaves audio behind unless <strong>Include audio when duplicating</strong> is enabled in Settings. New and duplicate widgets have a trash control; the original widget cannot be deleted.</p>
+    <p>Tags are available to the containing page through <code>widget.tags</code> and <code>widget.getTag(name)</code>. Use <code>widget.setTag(name, value)</code> or <code>widget.removeTag(name)</code> to update them in JavaScript, and listen for <code>tagschange</code> to react to user changes. Duplicate copies the tags; New starts with only <code>type=rich-text-audio</code>. Save/Open preserves the complete tag list.</p>
+    <p>Enable <strong>Resize width</strong> in Settings to display a right-edge drag handle. The widget cannot be widened beyond its parent container.</p>
+
     <h2>Portable save and open files</h2>
-    <p>Reveal the compact controls and use <strong>Save</strong> to create a portable <code>.itarea.zip</code> document. It stores the Unicode text, current mode, selected language, font, font size, and any audio saved in the recorder. The file contains a versioned <code>manifest.json</code> plus an optional normalized <code>audio.wav</code>.</p>
+    <p>Reveal the compact controls and use <strong>Save</strong> to create a portable <code>.itarea.zip</code> document. It stores plain Unicode text, sanitized formatted HTML, current mode, selected language, font, font size, tags, and any audio saved in the recorder. The file contains a versioned <code>manifest.json</code> plus an optional normalized <code>audio.wav</code>. Older plain-text widget documents remain openable.</p>
+    <p>For page integrations, <code>widget.value</code> remains the plain-text API. Read or assign <code>widget.htmlValue</code> for sanitized formatted HTML. Copy places both formats on the clipboard when supported.</p>
     <p>Use <strong>Open</strong> to restore the document into any iTranslator Text Area. The archive is validated first, and a confirmation appears before nonempty text or recorded audio is overwritten. If its font is unavailable in the receiving package, the widget uses the System default font and reports that substitution.</p>
     <div class="note"><strong>Keep the original file:</strong> this first implementation uses an uncompressed ZIP container so the standalone widget needs no ZIP library. Do not unpack and recompress the archive before reopening it in the widget.</div>
 
@@ -79,7 +91,7 @@
       <summary>Useful built-in mappings</summary>
       <div>
         <p><code>R</code> → ऋ, <code>RR</code> → ॠ, <code>S</code> → ष, <code>L</code> → ळ, <code>OM</code>/<code>AUM</code> → ॐ, <code>|</code> → ।, and <code>||</code> → ॥.</p>
-        <p>Digits are converted to the selected script. The settings control lets each widget choose its own language, font, and size, or apply those choices globally.</p>
+        <p>Digits are converted to the selected script. Settings controls the widget language and default size; the formatting-row Font control applies fonts to selections or subsequent typing.</p>
       </div>
     </details>
   </body>

@@ -4,6 +4,9 @@ const MAX_ARCHIVE_BYTES = 150 * 1024 * 1024;
 const MAX_MANIFEST_BYTES = 1024 * 1024;
 const MAX_TEXT_LENGTH = 5 * 1024 * 1024;
 const MAX_ENTRIES = 8;
+const MAX_DOCUMENT_TAGS = 100;
+const MAX_DOCUMENT_TAG_NAME_LENGTH = 80;
+const MAX_DOCUMENT_TAG_VALUE_LENGTH = 500;
 
 export const documentIcons = {
   open: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6h-8l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2Zm0 12H4V8h16v10Zm-5-7-1.4 1.4 1.6 1.6H9v2h6.2l-1.6 1.6L15 19l4-4-4-4Z"/></svg>',
@@ -171,10 +174,24 @@ function validateManifest(manifest, files) {
   if (!manifest || manifest.format !== DOCUMENT_FORMAT || manifest.formatVersion !== DOCUMENT_FORMAT_VERSION) throw new Error('This is not a supported iTranslator document.');
   if (!manifest.content || typeof manifest.content.text !== 'string') throw new Error('The document text is missing or invalid.');
   if (manifest.content.text.length > MAX_TEXT_LENGTH) throw new Error('The document text exceeds the safety limit.');
+  if (manifest.content.html !== undefined && (typeof manifest.content.html !== 'string' || manifest.content.html.length > MAX_TEXT_LENGTH)) throw new Error('The document formatting is missing or invalid.');
   if (typeof manifest.content.language !== 'string' || typeof manifest.content.font !== 'string') throw new Error('The document language or font is invalid.');
   if (!['itrans', 'roman', 'english'].includes(manifest.content.mode)) throw new Error('The document mode is invalid.');
   const fontSize = Number(manifest.content.fontSize);
   if (!Number.isFinite(fontSize) || fontSize < 14 || fontSize > 48) throw new Error('The document font size is invalid.');
+  if (manifest.metadata?.tags !== undefined) {
+    if (!Array.isArray(manifest.metadata.tags) || manifest.metadata.tags.length > MAX_DOCUMENT_TAGS) throw new Error('The document tags are invalid.');
+    const names = new Set();
+    for (const tag of manifest.metadata.tags) {
+      if (!tag || typeof tag.name !== 'string' || typeof tag.value !== 'string'
+        || !tag.name.trim() || !tag.value.trim()
+        || tag.name.length > MAX_DOCUMENT_TAG_NAME_LENGTH || tag.value.length > MAX_DOCUMENT_TAG_VALUE_LENGTH
+        || names.has(tag.name)) throw new Error('The document tags are invalid.');
+      names.add(tag.name);
+    }
+    const required = manifest.metadata.tags.find(tag => tag.name === 'type');
+    if (!required || required.value !== 'rich-text-audio') throw new Error('The document required type tag is invalid.');
+  }
   if (manifest.audio?.included) {
     if (manifest.audio.file !== 'audio.wav' || !files.has('audio.wav')) throw new Error('The document refers to missing or invalid audio.');
     const wav = files.get('audio.wav');
@@ -223,6 +240,17 @@ export function createDocumentController(widget, version) {
   const fileInput = widget.querySelector('[data-document-file]');
   const feedback = widget.querySelector('[data-document-feedback]');
   let feedbackTimer;
+  let dirty = Boolean(widget.value.trim());
+
+  const updateSaveState = () => {
+    saveButton.classList.toggle('is-dirty', dirty);
+    const label = dirty ? 'Save iTranslator document — not saved' : 'Save iTranslator document — Saved';
+    saveButton.title = label;
+    saveButton.setAttribute('aria-label', label);
+  };
+  const markDirty = () => { dirty = true; updateSaveState(); };
+  const markSaved = () => { dirty = false; updateSaveState(); };
+  updateSaveState();
 
   const showFeedback = (message, error = false) => {
     clearTimeout(feedbackTimer);
@@ -239,11 +267,13 @@ export function createDocumentController(widget, version) {
     widgetVersion: version,
     content: {
       text: widget.value,
+      html: widget.htmlValue,
       language: widget.target,
       mode: widget.mode,
       font: widget.font,
       fontSize: Number.parseInt(widget.fontSize, 10),
     },
+    metadata: { tags: widget.tags },
     audio: audio ? { included: true, file: 'audio.wav', mimeType: 'audio/wav', durationMs: audio.durationMs } : { included: false },
   });
 
@@ -281,6 +311,7 @@ export function createDocumentController(widget, version) {
         filename = handle.name;
       } else downloadBlob(archive, filename);
       showFeedback('Saved');
+      markSaved();
       widget.dispatchEvent(new CustomEvent('documentsave', { bubbles: true, detail: { filename, size: archive.size } }));
     } catch (error) {
       if (error?.name !== 'AbortError') { showFeedback('Save failed', true); window.alert(`The document could not be saved.\n\n${error.message || error}`); }
@@ -294,18 +325,21 @@ export function createDocumentController(widget, version) {
       const { manifest, audio } = await readItareaArchive(file);
       await widget.audioController?.ready;
       if (!widget.supportsTarget(manifest.content.language)) throw new Error(`Unsupported language: ${manifest.content.language}`);
-      const hasExisting = Boolean(widget.value.trim() || widget.audioBlob);
-      if (hasExisting && !window.confirm('Opening this file will overwrite the existing text and recorded audio in this text area. Continue?')) { showFeedback('Open cancelled'); return; }
+      const hasExisting = Boolean(widget.value.trim() || widget.audioBlob || widget.tags.length > 1);
+      if (hasExisting && !window.confirm('Opening this file will overwrite the existing text, tags, and recorded audio in this text area. Continue?')) { showFeedback('Open cancelled'); return; }
       const warnings = [];
       widget.setTarget(manifest.content.language);
       try { widget.setFont(manifest.content.font); }
       catch { widget.setFont('system'); warnings.push(`Font “${manifest.content.font}” was unavailable, so System default was used.`); }
       widget.setFontSize(manifest.content.fontSize);
-      widget.value = manifest.content.text;
+      if (manifest.content.html) widget.htmlValue = manifest.content.html;
+      else widget.value = manifest.content.text;
       widget.setMode(manifest.content.mode);
+      widget.tags = manifest.metadata?.tags || [{ name: 'type', value: 'rich-text-audio' }];
       if (audio) await widget.audioController.importAudio(audio);
       else await widget.audioController.clearAudio();
       showFeedback('Opened');
+      markSaved();
       widget.dispatchEvent(new CustomEvent('documentopen', { bubbles: true, detail: { filename: file.name, manifest } }));
       if (warnings.length) window.alert(warnings.join('\n'));
     } catch (error) {
@@ -317,10 +351,18 @@ export function createDocumentController(widget, version) {
   openButton.addEventListener('click', () => fileInput.click());
   saveButton.addEventListener('click', save);
   fileInput.addEventListener('change', () => { const file = fileInput.files?.[0]; if (file) applyDocument(file); });
+  widget.addEventListener('audiochange', markDirty);
+  widget.addEventListener('tagschange', markDirty);
 
   return {
     save,
     open: () => fileInput.click(),
-    destroy() { clearTimeout(feedbackTimer); },
+    markDirty,
+    markSaved,
+    destroy() {
+      clearTimeout(feedbackTimer);
+      widget.removeEventListener('audiochange', markDirty);
+      widget.removeEventListener('tagschange', markDirty);
+    },
   };
 }

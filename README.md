@@ -3,7 +3,7 @@
 `itarea` is a browser-native, configurable ITRANS input widget. It provides an
 ITRANS input mode (the default) and an English mode in the same text area.
 
-Current stable release: **1.2.0**.
+Current stable release: **1.3.0**.
 
 ## Quick start
 
@@ -34,9 +34,9 @@ standalone widget and stylesheet from the public repository through jsDelivr:
 
 ```html
 <link rel="stylesheet"
-      href="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.2.0/dist/itarea.css">
+      href="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.3.0/dist/itarea.css">
 
-<script src="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.2.0/dist/itarea-standalone.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.3.0/dist/itarea-standalone.js"></script>
 
 <i-translator-textarea label="Sanskrit text" audio-id="lesson-1"></i-translator-textarea>
 ```
@@ -86,11 +86,13 @@ at build time:
 <i-translator-textarea label="Sanskrit text"></i-translator-textarea>
 ```
 
-The settings control in each widget includes a page-wide font selector. The
-starter package includes regular styles of Noto Sans Devanagari, Noto Serif
-Devanagari, Tiro Devanagari Sanskrit, Sanskrit 2003, and Chandas, plus a System
-default choice. To set
-the selection from JavaScript, import and call `setITranslatorFont()`:
+The formatting toolbar includes a quick-access font selector. It applies a font
+to selected text, or to subsequently typed text when only the caret is present.
+The default uses ITF Devanagari when that font is installed and automatically
+falls back to the bundled Noto Sans Devanagari otherwise. The starter package
+also includes Noto Serif Devanagari, Tiro Devanagari Sanskrit, Sanskrit 2003,
+and Chandas, plus a System default choice. The existing `setITranslatorFont()` API remains available when
+a host page needs to change the base font for every widget:
 
 ```js
 setITranslatorFont('tiro-devanagari-sanskrit');
@@ -108,31 +110,55 @@ does so and can be opened directly from disk.
   standard `RRi`/`R^i` and `RRI`/`R^I` forms.
 - ITRANS input is replaced in place by the configured target script, so Sanskrit
   and English can be mixed in a single text area.
-- Each widget keeps its own target language, font, and text size. The settings
-  menu can optionally apply those changes to every widget on the page.
-- A 14–48px number field beside the mode buttons controls text size. Type a
-  value and press Enter, or leave the field, to apply it.
+- Each widget keeps its own target language and default text size. The settings
+  menu can optionally apply those choices to every widget on the page.
+- The font selector sits beside the mode buttons for quick access. It applies
+  to selected text or to subsequent typing at the caret.
+- A responsive formatting group formats selected text with bold, italic, underline, bulleted
+  and numbered lists, 36 preset colors plus a custom color, font family, font size, Normal/
+  Medium/Demi/Bold weight, line spacing, four-character indentation,
+  left/center/right alignment, links,
+  and clear formatting. Font family, font size, color, and weight also apply to
+  subsequent typing when the selection is a caret. The group wraps into extra
+  rows automatically when the widget is narrow. The default text style is 24px Demi.
+- The transliteration controls also wrap into additional rows within their
+  shared border when the widget is narrow. The Expand icon beside Duplicate
+  toggles automatic height expansion without opening Settings.
+- The Tags control opens a per-widget metadata editor. Every widget starts with
+  the immutable `type=rich-text-audio` tag; additional unique name/value tags
+  can be added, updated, deleted, queried by the containing page, duplicated,
+  and preserved in `.itarea.zip` documents.
 - Each widget can record up to five minutes of audio and edit it using a
   selectable waveform. The editor supports previewing a selection, deleting or
   silencing a selection, inserting silence, five edit undo/redo steps, reset,
   download, and re-recording.
-- Saved audio belongs to that widget and remains in the same browser for 30
-  days. Give reusable widgets a stable `audio-id`; otherwise their page order is
-  used. Audio is not embedded in or uploaded by the widget.
+- Saved audio belongs to that widget for the current page session only. A page
+  refresh clears it unless it was exported with **Save**. Audio is not uploaded
+  by the widget.
+- Text is not stored automatically; use **Save** to preserve it in an
+  `.itarea.zip` document.
 - The Play control below Copy is disabled until audio is saved. If the text is
   changed afterward, the Play control is marked as stale so the recording can
   be reviewed or replaced.
 - The Save and Open controls store one widget as a portable `.itarea.zip`
-  document. It includes the Unicode text, mode, language, font, font size, and
-  saved audio when present. Opening warns before replacing nonempty content.
+  document. It includes plain text, sanitized formatted HTML, mode, language,
+  font, font size, tags, and saved audio when present. A red dot on Save means the
+  document has changed since its last export. Opening warns before replacing
+  nonempty content. Older plain-text `.itarea.zip` files remain supported.
 - The paired unfold control below Copy restores or hides the controls above the
   text area. Widgets start in compact mode, with the top controls hidden and
   Copy still available.
+- Settings can opt in to a right-edge width-resize handle. The width stays
+  within its parent container.
+- New creates an empty sibling widget with the same language, font, and text
+  size. Duplicate also copies text, mode, and auto-expand. It omits audio unless
+  **Include audio when duplicating** is enabled in the source widget's settings.
 - English mode leaves the input unchanged.
 - `Ctrl+S` or `Ctrl+I` toggles between iTrans and English. `Ctrl+R` toggles
   between Roman and iTrans, while `Ctrl+O` toggles between English and iTrans.
   `Ctrl+E` and `Escape` always select English mode.
-  English mode turns the input light grey and shows a floating mode indicator.
+  English mode turns the input light grey. The Settings tooltip identifies the
+  active language or input mode.
 - Roman mode replaces ITRANS input with IAST, such as `kRtaj~naH` becoming
   `kṛtajñaḥ`.
 - `Ctrl+Z` or `Ctrl+U` undoes up to 100 recent editing actions per widget.
@@ -146,6 +172,25 @@ does so and can be opened directly from disk.
   Malayalam, and Roman/IAST. The page-level target menu is populated from the
   configuration.
 
+### Querying tags from a containing page
+
+```js
+const widget = document.querySelector('i-translator-textarea');
+
+widget.tags;                 // [{ name: 'type', value: 'rich-text-audio' }, ...]
+widget.getTag('type');       // 'rich-text-audio'
+widget.setTag('lesson', 'greetings');
+widget.removeTag('lesson');
+
+widget.addEventListener('tagschange', event => {
+  console.log(event.detail.tags);
+});
+```
+
+Assign an array of `{ name, value }` objects—or an object map—to `widget.tags`
+to replace all optional tags. The required `type=rich-text-audio` tag is always
+restored and cannot be changed or deleted.
+
 The initial transliterator covers common Sanskrit vowels, consonants, marks,
 virama, and punctuation. It is deliberately a foundation rather than a claim of
 complete compatibility with every historical ITRANS extension.
@@ -154,7 +199,8 @@ complete compatibility with every historical ITRANS extension.
 
 - `config/itrans-config.json` - character maps and aliases to customize.
 - `src/itransliterator.js` - configurable transliteration engine.
-- `src/itaudio.js` - browser recorder, waveform editor, and 30-day audio storage.
+- `src/itaudio.js` - session-only browser recorder and waveform editor.
+- `src/itrichtext.js` - formatting toolbar, selection handling, and HTML sanitizer.
 - `src/itdocument.js` - portable `.itarea.zip` creation, validation, save, and
   restore support.
 - `src/itextarea.js` - reusable `<i-translator-textarea>` web component.
@@ -186,18 +232,11 @@ to five minutes, then use the waveform editor to preview, select, delete,
 silence, or insert silence. Select **Save audio** to associate the result with
 that widget, and **Download** to keep a separate audio file.
 
-For reliable restoration after reloading a page, assign a unique and stable
-`audio-id`:
-
-```html
-<i-translator-textarea audio-id="verse-001"></i-translator-textarea>
-```
-
-Audio is stored in IndexedDB for 30 days, scoped to the same browser profile and
-page location. Clearing site data, moving a local page, changing its URL, using
-another browser/profile, or reaching the browser's storage limit can remove or
-separate it. The component dispatches an `audiochange` event after save or
-delete, and exposes the saved data to page code:
+Audio is kept only in memory for the current page session. Refreshing or closing
+the page clears it. Use the widget's **Save** control to include it in a portable
+`.itarea.zip` document, or use **Download** for a separate audio file. The
+component dispatches an `audiochange` event after save or delete, and exposes the
+saved data to page code:
 
 ```js
 const widget = document.querySelector('i-translator-textarea');
@@ -209,13 +248,27 @@ Microphone access depends on browser permission. Local `file://` recording has
 been verified in Chrome on macOS, but other browser/security configurations may
 require the page to be served from `localhost` or HTTPS.
 
+## Creating widgets and resizing width
+
+Reveal the controls to use **New** or **Duplicate**. New places an empty widget
+directly below the current one while retaining its language, font, font size,
+and size. Duplicate also retains its text, active mode, and auto-expand choice.
+Audio is intentionally omitted unless **Include audio when duplicating** is
+checked in Settings. Dynamically created widgets show a trash control, while the
+original page widget cannot be deleted. They exist only for the current page
+session; add permanent widget elements to the page's HTML when they must also
+exist after a page refresh.
+
+Enable **Resize width** in Settings to reveal a right-edge drag handle. This is
+off by default and keeps the widget within the width of its parent container.
+
 ## Saving and opening portable documents
 
 Reveal the widget controls, then use **Save** to create a single file whose name
 ends in `.itarea.zip`. The archive contains:
 
 - `manifest.json` with the Unicode text, selected language and mode, font, font
-  size, widget version, and audio metadata.
+  size, sanitized formatted HTML, widget version, and audio metadata.
 - `audio.wav` when audio has been saved in the widget's recorder.
 
 Chrome and other browsers that support the native save picker let you choose a
@@ -236,6 +289,11 @@ const widget = document.querySelector('i-translator-textarea');
 widget.addEventListener('documentsave', event => console.log(event.detail));
 widget.addEventListener('documentopen', event => console.log(event.detail));
 ```
+
+The existing `widget.value` API continues to read and write plain text. Use
+`widget.htmlValue` when a host page needs the sanitized formatted HTML. The Copy
+control writes both HTML and plain-text clipboard representations when the
+browser supports rich clipboard data.
 
 ## Editing mappings
 

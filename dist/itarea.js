@@ -59,9 +59,6 @@ function createTransliterator(config, target = config.defaultTarget) {
   return devanagari;
 }
 
-const AUDIO_DB = 'itarea-audio';
-const AUDIO_STORE = 'recordings';
-const AUDIO_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 const AUDIO_MAX_DURATION_MS = 5 * 60 * 1000;
 const AUDIO_HISTORY_LIMIT = 5;
 
@@ -74,58 +71,6 @@ const audioIcons = {
 
 function audioDialogMarkup() {
   return `<div class="itarea__audio-overlay" data-audio-dialog hidden><section class="itarea__audio-dialog" role="dialog" aria-modal="true" aria-label="Record and edit audio"><header><h2>Record and edit audio</h2><button type="button" class="itarea__audio-close" data-audio-close aria-label="Close audio editor">×</button></header><p class="itarea__audio-status" data-audio-status role="status">Ready to record.</p><div class="itarea__audio-recorder"><canvas data-live-waveform width="720" height="86" aria-label="Live recording waveform"></canvas><div class="itarea__audio-record-row"><span data-record-time>0:00 / 5:00</span><button type="button" data-start-recording>${audioIcons.record}<span>Record</span></button><button type="button" data-stop-recording disabled>${audioIcons.stop}<span>Stop</span></button></div></div><div class="itarea__audio-editor" data-audio-editor hidden><audio data-editor-player controls preload="metadata"></audio><canvas data-audio-waveform width="720" height="128" aria-label="Editable audio waveform"></canvas><div class="itarea__audio-readout"><span><strong>Duration:</strong> <span data-audio-duration>0:00</span></span><span><strong>Selection:</strong> <span data-audio-selection>No selection</span></span></div><div class="itarea__audio-tool-grid"><section><h3>Preview</h3><div><button type="button" data-play-audio>Play / Pause</button><button type="button" data-play-selection disabled>Play selection</button></div></section><section><h3>Edit selection</h3><div><button type="button" data-delete-selection disabled>Delete</button><button type="button" data-silence-selection disabled>Silence</button></div></section><section><h3>History</h3><div><button type="button" data-audio-undo disabled>Undo</button><button type="button" data-audio-redo disabled>Redo</button><button type="button" data-audio-reset disabled>Reset</button></div></section><section><h3>Insert silence</h3><label>Seconds <input type="number" data-pause-duration min="0.1" max="10" step="0.1" value="1"></label><div><button type="button" data-insert-silence="start">At start</button><button type="button" data-insert-silence="cursor">At cursor</button><button type="button" data-insert-silence="end">At end</button></div></section></div><footer><button type="button" class="primary" data-save-audio>Save audio</button><a data-download-audio download>Download</a><button type="button" class="danger" data-delete-audio>Delete saved audio</button></footer></div></section></div>`;
-}
-
-function requestResult(request) {
-  return new Promise((resolve, reject) => {
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-}
-
-function openAudioDatabase() {
-  return new Promise((resolve, reject) => {
-    if (!window.indexedDB) return reject(new Error('IndexedDB is unavailable.'));
-    const request = indexedDB.open(AUDIO_DB, 1);
-    request.onupgradeneeded = () => request.result.createObjectStore(AUDIO_STORE, { keyPath: 'key' });
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-}
-
-async function withAudioStore(mode, callback) {
-  const database = await openAudioDatabase();
-  try {
-    const transaction = database.transaction(AUDIO_STORE, mode);
-    const completed = new Promise((resolve, reject) => {
-      transaction.oncomplete = resolve;
-      transaction.onerror = () => reject(transaction.error);
-      transaction.onabort = () => reject(transaction.error);
-    });
-    const result = await callback(transaction.objectStore(AUDIO_STORE));
-    await completed;
-    return result;
-  } finally {
-    database.close();
-  }
-}
-
-async function loadAudioRecord(key) {
-  const record = await withAudioStore('readonly', store => requestResult(store.get(key)));
-  if (!record) return null;
-  if (record.expiresAt <= Date.now()) {
-    await deleteAudioRecord(key);
-    return null;
-  }
-  return record;
-}
-
-function saveAudioRecord(record) {
-  return withAudioStore('readwrite', store => requestResult(store.put(record)));
-}
-
-function deleteAudioRecord(key) {
-  return withAudioStore('readwrite', store => requestResult(store.delete(key)));
 }
 
 function formatTime(seconds, decimals = false) {
@@ -238,8 +183,6 @@ function createAudioController(widget) {
   const saveButton = widget.querySelector('[data-save-audio]');
   const deleteSavedButton = widget.querySelector('[data-delete-audio]');
   const download = widget.querySelector('[data-download-audio]');
-  const storageId = widget.getAttribute('audio-id') || widget.id || `itarea-${Array.from(document.querySelectorAll('i-translator-textarea')).indexOf(widget) + 1}`;
-  const storageKey = `${location.href.split('#')[0]}::${storageId}`;
   let savedBlob = null; let savedDurationMs = 0; let savedText = ''; let savedUrl = null;
   let workingBlob = null; let workingBuffer = null; let originalBuffer = null; let workingUrl = null;
   let audioContext = null; let selection = null; let cursorSeconds = 0; let selectionEnd = null;
@@ -249,7 +192,7 @@ function createAudioController(widget) {
   const outsideAudio = new Audio();
 
   const setStatus = (message, error = false) => { status.textContent = message; status.classList.toggle('error', error); };
-  const textNow = () => widget.input?.value || '';
+  const textNow = () => widget.value || '';
   const isStale = () => Boolean(savedBlob && savedText !== textNow());
   const updateOutside = () => {
     outsidePlay.disabled = !savedBlob;
@@ -303,19 +246,17 @@ function createAudioController(widget) {
   };
   const save = async({ closeDialog = false } = {}) => {
     if (!workingBlob) return;
-    const record = { key: storageKey, blob: workingBlob, mimeType: workingBlob.type, durationMs: Math.round((workingBuffer?.duration || 0) * 1000), text: textNow(), createdAt: Date.now(), expiresAt: Date.now() + AUDIO_RETENTION_MS };
-    try { await saveAudioRecord(record); setStatus('Audio saved in this browser for 30 days.'); }
-    catch { setStatus('Audio saved for this page session; persistent browser storage was unavailable.', true); }
+    const record = { blob: workingBlob, durationMs: Math.round((workingBuffer?.duration || 0) * 1000), text: textNow() };
+    setStatus('Audio is ready for this page session. Use Save to export it.');
     savedBlob = record.blob; savedDurationMs = record.durationMs; savedText = record.text;
     revoke(savedUrl); savedUrl = URL.createObjectURL(savedBlob); updateOutside();
-    widget.dispatchEvent(new CustomEvent('audiochange', { bubbles: true, detail: { blob: savedBlob, durationMs: savedDurationMs, expiresAt: record.expiresAt } }));
+    widget.dispatchEvent(new CustomEvent('audiochange', { bubbles: true, detail: { blob: savedBlob, durationMs: savedDurationMs } }));
     if (closeDialog) {
       dialog.hidden = true;
       widget.input?.focus();
     }
   };
   const removeSaved = async() => {
-    try { await deleteAudioRecord(storageKey); } catch { /* Session state is still cleared. */ }
     savedBlob = null; savedDurationMs = 0; savedText = ''; revoke(savedUrl); savedUrl = null; updateOutside();
     outsideAudio.pause(); outsideAudio.removeAttribute('src'); outsidePlay.innerHTML = audioIcons.play;
     widget.dispatchEvent(new CustomEvent('audiochange', { bubbles: true, detail: { blob: null, durationMs: 0 } }));
@@ -439,9 +380,7 @@ function createAudioController(widget) {
   window.addEventListener('resize', redraw);
 
   updateOutside();
-  const ready = loadAudioRecord(storageKey).then(record => {
-    if (!record || destroyed) return; savedBlob = record.blob; savedDurationMs = record.durationMs; savedText = record.text || ''; savedUrl = URL.createObjectURL(savedBlob); updateOutside();
-  }).catch(() => {});
+  const ready = Promise.resolve();
 
   const controller = {
     get blob() { return savedBlob; }, get durationMs() { return savedDurationMs; },
@@ -473,6 +412,9 @@ const MAX_ARCHIVE_BYTES = 150 * 1024 * 1024;
 const MAX_MANIFEST_BYTES = 1024 * 1024;
 const MAX_TEXT_LENGTH = 5 * 1024 * 1024;
 const MAX_ENTRIES = 8;
+const MAX_DOCUMENT_TAGS = 100;
+const MAX_DOCUMENT_TAG_NAME_LENGTH = 80;
+const MAX_DOCUMENT_TAG_VALUE_LENGTH = 500;
 
 const documentIcons = {
   open: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6h-8l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2Zm0 12H4V8h16v10Zm-5-7-1.4 1.4 1.6 1.6H9v2h6.2l-1.6 1.6L15 19l4-4-4-4Z"/></svg>',
@@ -640,10 +582,24 @@ function validateManifest(manifest, files) {
   if (!manifest || manifest.format !== DOCUMENT_FORMAT || manifest.formatVersion !== DOCUMENT_FORMAT_VERSION) throw new Error('This is not a supported iTranslator document.');
   if (!manifest.content || typeof manifest.content.text !== 'string') throw new Error('The document text is missing or invalid.');
   if (manifest.content.text.length > MAX_TEXT_LENGTH) throw new Error('The document text exceeds the safety limit.');
+  if (manifest.content.html !== undefined && (typeof manifest.content.html !== 'string' || manifest.content.html.length > MAX_TEXT_LENGTH)) throw new Error('The document formatting is missing or invalid.');
   if (typeof manifest.content.language !== 'string' || typeof manifest.content.font !== 'string') throw new Error('The document language or font is invalid.');
   if (!['itrans', 'roman', 'english'].includes(manifest.content.mode)) throw new Error('The document mode is invalid.');
   const fontSize = Number(manifest.content.fontSize);
   if (!Number.isFinite(fontSize) || fontSize < 14 || fontSize > 48) throw new Error('The document font size is invalid.');
+  if (manifest.metadata?.tags !== undefined) {
+    if (!Array.isArray(manifest.metadata.tags) || manifest.metadata.tags.length > MAX_DOCUMENT_TAGS) throw new Error('The document tags are invalid.');
+    const names = new Set();
+    for (const tag of manifest.metadata.tags) {
+      if (!tag || typeof tag.name !== 'string' || typeof tag.value !== 'string'
+        || !tag.name.trim() || !tag.value.trim()
+        || tag.name.length > MAX_DOCUMENT_TAG_NAME_LENGTH || tag.value.length > MAX_DOCUMENT_TAG_VALUE_LENGTH
+        || names.has(tag.name)) throw new Error('The document tags are invalid.');
+      names.add(tag.name);
+    }
+    const required = manifest.metadata.tags.find(tag => tag.name === 'type');
+    if (!required || required.value !== 'rich-text-audio') throw new Error('The document required type tag is invalid.');
+  }
   if (manifest.audio?.included) {
     if (manifest.audio.file !== 'audio.wav' || !files.has('audio.wav')) throw new Error('The document refers to missing or invalid audio.');
     const wav = files.get('audio.wav');
@@ -692,6 +648,17 @@ function createDocumentController(widget, version) {
   const fileInput = widget.querySelector('[data-document-file]');
   const feedback = widget.querySelector('[data-document-feedback]');
   let feedbackTimer;
+  let dirty = Boolean(widget.value.trim());
+
+  const updateSaveState = () => {
+    saveButton.classList.toggle('is-dirty', dirty);
+    const label = dirty ? 'Save iTranslator document — not saved' : 'Save iTranslator document — Saved';
+    saveButton.title = label;
+    saveButton.setAttribute('aria-label', label);
+  };
+  const markDirty = () => { dirty = true; updateSaveState(); };
+  const markSaved = () => { dirty = false; updateSaveState(); };
+  updateSaveState();
 
   const showFeedback = (message, error = false) => {
     clearTimeout(feedbackTimer);
@@ -708,11 +675,13 @@ function createDocumentController(widget, version) {
     widgetVersion: version,
     content: {
       text: widget.value,
+      html: widget.htmlValue,
       language: widget.target,
       mode: widget.mode,
       font: widget.font,
       fontSize: Number.parseInt(widget.fontSize, 10),
     },
+    metadata: { tags: widget.tags },
     audio: audio ? { included: true, file: 'audio.wav', mimeType: 'audio/wav', durationMs: audio.durationMs } : { included: false },
   });
 
@@ -750,6 +719,7 @@ function createDocumentController(widget, version) {
         filename = handle.name;
       } else downloadBlob(archive, filename);
       showFeedback('Saved');
+      markSaved();
       widget.dispatchEvent(new CustomEvent('documentsave', { bubbles: true, detail: { filename, size: archive.size } }));
     } catch (error) {
       if (error?.name !== 'AbortError') { showFeedback('Save failed', true); window.alert(`The document could not be saved.\n\n${error.message || error}`); }
@@ -763,18 +733,21 @@ function createDocumentController(widget, version) {
       const { manifest, audio } = await readItareaArchive(file);
       await widget.audioController?.ready;
       if (!widget.supportsTarget(manifest.content.language)) throw new Error(`Unsupported language: ${manifest.content.language}`);
-      const hasExisting = Boolean(widget.value.trim() || widget.audioBlob);
-      if (hasExisting && !window.confirm('Opening this file will overwrite the existing text and recorded audio in this text area. Continue?')) { showFeedback('Open cancelled'); return; }
+      const hasExisting = Boolean(widget.value.trim() || widget.audioBlob || widget.tags.length > 1);
+      if (hasExisting && !window.confirm('Opening this file will overwrite the existing text, tags, and recorded audio in this text area. Continue?')) { showFeedback('Open cancelled'); return; }
       const warnings = [];
       widget.setTarget(manifest.content.language);
       try { widget.setFont(manifest.content.font); }
       catch { widget.setFont('system'); warnings.push(`Font “${manifest.content.font}” was unavailable, so System default was used.`); }
       widget.setFontSize(manifest.content.fontSize);
-      widget.value = manifest.content.text;
+      if (manifest.content.html) widget.htmlValue = manifest.content.html;
+      else widget.value = manifest.content.text;
       widget.setMode(manifest.content.mode);
+      widget.tags = manifest.metadata?.tags || [{ name: 'type', value: 'rich-text-audio' }];
       if (audio) await widget.audioController.importAudio(audio);
       else await widget.audioController.clearAudio();
       showFeedback('Opened');
+      markSaved();
       widget.dispatchEvent(new CustomEvent('documentopen', { bubbles: true, detail: { filename: file.name, manifest } }));
       if (warnings.length) window.alert(warnings.join('\n'));
     } catch (error) {
@@ -786,11 +759,362 @@ function createDocumentController(widget, version) {
   openButton.addEventListener('click', () => fileInput.click());
   saveButton.addEventListener('click', save);
   fileInput.addEventListener('change', () => { const file = fileInput.files?.[0]; if (file) applyDocument(file); });
+  widget.addEventListener('audiochange', markDirty);
+  widget.addEventListener('tagschange', markDirty);
 
   return {
     save,
     open: () => fileInput.click(),
-    destroy() { clearTimeout(feedbackTimer); },
+    markDirty,
+    markSaved,
+    destroy() {
+      clearTimeout(feedbackTimer);
+      widget.removeEventListener('audiochange', markDirty);
+      widget.removeEventListener('tagschange', markDirty);
+    },
+  };
+}
+
+const COLOR_PRESETS = [
+  '#000000', '#434343', '#666666', '#999999', '#b7b7b7', '#cccccc',
+  '#980000', '#ff0000', '#ff9900', '#ffff00', '#00ff00', '#00ffff',
+  '#4a86e8', '#0000ff', '#9900ff', '#ff00ff', '#e6b8af', '#f4cccc',
+  '#fce5cd', '#fff2cc', '#d9ead3', '#d0e0e3', '#c9daf8', '#cfe2f3',
+  '#d9d2e9', '#ead1dc', '#a61c00', '#cc0000', '#e69138', '#f1c232',
+  '#6aa84f', '#45818e', '#3c78d8', '#3d85c6', '#674ea7', '#a64d79',
+];
+
+const ALLOWED_TAGS = new Set(['A', 'B', 'BR', 'DIV', 'EM', 'I', 'LI', 'OL', 'P', 'SPAN', 'STRONG', 'U', 'UL']);
+const ALLOWED_STYLES = new Set(['color', 'font-family', 'font-size', 'font-weight', 'line-height', 'margin-left', 'text-align']);
+const SIZE_OPTIONS = [14, 16, 18, 20, 22, 24, 28, 32, 36, 40, 44, 48];
+const WEIGHT_OPTIONS = [['Normal', '400'], ['Medium', '500'], ['Demi', '600'], ['Bold', '700']];
+const LINE_HEIGHT_STEPS = [1, 1.15, 1.3, 1.5, 1.75, 2, 2.5, 3];
+const INDENT_STEP_CH = 4;
+const MAX_INDENT_CH = 40;
+
+const icon = path => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${path}"/></svg>`;
+const icons = {
+  bullets: icon('M4 10.5c.83 0 1.5-.67 1.5-1.5S4.83 7.5 4 7.5 2.5 8.17 2.5 9s.67 1.5 1.5 1.5Zm0 6c.83 0 1.5-.67 1.5-1.5S4.83 13.5 4 13.5 2.5 14.17 2.5 15s.67 1.5 1.5 1.5Zm0-12C4.83 4.5 5.5 3.83 5.5 3S4.83 1.5 4 1.5 2.5 2.17 2.5 3 3.17 4.5 4 4.5ZM8 16h14v-2H8v2Zm0-6h14V8H8v2Zm0-8v2h14V2H8Z'),
+  numbers: icon('M2 17h2v.5H3v1h1v.5H2v1h3v-4H2v1Zm1-9h1V4H2v1h1v3Zm-1 3h1.8L2 13.1v.9h3v-1H3.2L5 10.9V10H2v1Zm6 7h14v-2H8v2Zm0-7h14V9H8v2Zm0-7v2h14V4H8Z'),
+  left: icon('M3 5h18v2H3V5Zm0 4h12v2H3V9Zm0 4h18v2H3v-2Zm0 4h12v2H3v-2Z'),
+  center: icon('M3 5h18v2H3V5Zm3 4h12v2H6V9Zm-3 4h18v2H3v-2Zm3 4h12v2H6v-2Z'),
+  right: icon('M3 5h18v2H3V5Zm6 4h12v2H9V9Zm-6 4h18v2H3v-2Zm6 4h12v2H9v-2Z'),
+  link: icon('M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7a5 5 0 0 0 0 10h4v-1.9H7A3.1 3.1 0 0 1 3.9 12ZM8 13h8v-2H8v2Zm9-6h-4v1.9h4a3.1 3.1 0 1 1 0 6.2h-4V17h4a5 5 0 0 0 0-10Z'),
+};
+
+const escapeAttribute = value => String(value).replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+
+function richTextToolbarMarkup(fontOptions = {}, defaultFont = '') {
+  const colors = COLOR_PRESETS.map(value => `<button type="button" class="itarea__color-preset" data-format-color="${value}" style="--swatch:${value}" title="${value}" aria-label="Text color ${value}"></button>`).join('');
+  const sizes = SIZE_OPTIONS.map(value => `<option value="${value}px"${value === 24 ? ' selected' : ''}>${value}</option>`).join('');
+  const weights = WEIGHT_OPTIONS.map(([label, value]) => `<option value="${value}"${value === '600' ? ' selected' : ''}>${label}</option>`).join('');
+  const fonts = Object.entries(fontOptions).map(([id, font]) => `<option value="${escapeAttribute(font.stack || font.family)}"${id === defaultFont ? ' selected' : ''}>${escapeAttribute(font.label)}</option>`).join('');
+  return `<div class="itarea__format-bar" role="toolbar" aria-label="Text formatting">
+    <button type="button" data-format-command="bold" title="Bold" aria-label="Bold"><strong>B</strong></button>
+    <button type="button" data-format-command="italic" title="Italic" aria-label="Italic"><em>I</em></button>
+    <button type="button" data-format-command="underline" title="Underline" aria-label="Underline"><u>U</u></button>
+    <button type="button" data-format-command="insertUnorderedList" title="Bulleted list" aria-label="Bulleted list">${icons.bullets}</button>
+    <button type="button" data-format-command="insertOrderedList" title="Numbered list" aria-label="Numbered list">${icons.numbers}</button>
+    <span class="itarea__color-control"><button type="button" data-color-toggle title="Text color" aria-label="Text color"><span class="itarea__color-letter">A</span><span class="itarea__chevron">▾</span></button><span class="itarea__color-palette" data-color-palette hidden>${colors}<label class="itarea__custom-color">Custom color <input type="color" data-custom-color value="#774b0a"></label></span></span>
+    <label class="itarea__format-select itarea__format-font" title="Selected text font"><select data-format-font aria-label="Selected text font"><option value="">Font</option>${fonts}</select></label>
+    <label class="itarea__format-select" title="Selected text size"><span>F</span><select data-format-size aria-label="Selected text size"><option value="">Size</option>${sizes}</select></label>
+    <label class="itarea__format-select"><select data-format-weight aria-label="Font weight"><option value="">Weight</option>${weights}</select></label>
+    <button type="button" class="itarea__block-format" data-line-spacing="decrease" title="Decrease line spacing" aria-label="Decrease line spacing"><span class="itarea__material-symbol">format_line_spacing</span><small>−</small></button>
+    <button type="button" class="itarea__block-format" data-line-spacing="increase" title="Increase line spacing" aria-label="Increase line spacing"><span class="itarea__material-symbol">format_line_spacing</span><small>+</small></button>
+    <button type="button" class="itarea__block-format" data-indent="decrease" title="Decrease indent by 4 character spaces" aria-label="Decrease indent by 4 character spaces"><span class="itarea__material-symbol">format_indent_decrease</span></button>
+    <button type="button" class="itarea__block-format" data-indent="increase" title="Increase indent by 4 character spaces" aria-label="Increase indent by 4 character spaces"><span class="itarea__material-symbol">format_indent_increase</span></button>
+    <button type="button" data-format-command="justifyLeft" title="Left align" aria-label="Left align">${icons.left}</button>
+    <button type="button" data-format-command="justifyCenter" title="Center align" aria-label="Center align">${icons.center}</button>
+    <button type="button" data-format-command="justifyRight" title="Right align" aria-label="Right align">${icons.right}</button>
+    <button type="button" data-format-link title="Add or edit link" aria-label="Add or edit link">${icons.link}</button>
+    <button type="button" data-format-clear title="Remove formatting" aria-label="Remove formatting"><span class="itarea__clear-format">T×</span></button>
+  </div>`;
+}
+
+function cleanStyle(element) {
+  for (const property of [...element.style]) {
+    const value = element.style.getPropertyValue(property).trim();
+    const allowed = ALLOWED_STYLES.has(property)
+      && (property !== 'font-size' || /^([1-4][0-9])px$/.test(value))
+      && (property !== 'font-family' || /^[\w\s,"'-]+$/u.test(value))
+      && (property !== 'font-weight' || /^(400|500|600|700|normal|bold)$/.test(value))
+      && (property !== 'line-height' || /^(1(?:\.\d+)?|2(?:\.\d+)?|3)$/.test(value))
+      && (property !== 'margin-left' || /^(?:[048]|1[26]|2[048]|3[26]|40)ch$/.test(value))
+      && (property !== 'text-align' || /^(left|center|right)$/.test(value))
+      && (property !== 'color' || /^(#[0-9a-f]{3,8}|rgba?\([\d\s,.%]+\))$/i.test(value));
+    if (!allowed) element.style.removeProperty(property);
+  }
+  if (!element.getAttribute('style')) element.removeAttribute('style');
+}
+
+function sanitizeRichHtml(html) {
+  const template = document.createElement('template');
+  template.innerHTML = String(html || '');
+  const visit = node => {
+    for (const child of [...node.childNodes]) {
+      if (child.nodeType === Node.COMMENT_NODE) { child.remove(); continue; }
+      if (child.nodeType !== Node.ELEMENT_NODE) continue;
+      if (!ALLOWED_TAGS.has(child.tagName)) {
+        child.replaceWith(...child.childNodes);
+        visit(node);
+        continue;
+      }
+      for (const attribute of [...child.attributes]) {
+        if (attribute.name !== 'style' && !(child.tagName === 'A' && ['href', 'target', 'rel'].includes(attribute.name))) child.removeAttribute(attribute.name);
+      }
+      cleanStyle(child);
+      if (child.tagName === 'A') {
+        const href = child.getAttribute('href') || '';
+        if (!/^https?:\/\//i.test(href)) child.removeAttribute('href');
+        else { child.target = '_blank'; child.rel = 'noopener noreferrer'; }
+      }
+      visit(child);
+    }
+  };
+  visit(template.content);
+  return template.innerHTML.replaceAll('\u200b', '');
+}
+
+function selectionInside(editor) {
+  const selection = window.getSelection();
+  return selection?.rangeCount && editor.contains(selection.anchorNode) ? selection.getRangeAt(0) : null;
+}
+
+function rangeOverlapsTextNode(range, node) {
+  if (!node.length) return false;
+  try {
+    return range.intersectsNode(node);
+  } catch {
+    return false;
+  }
+}
+
+function textOffsetsForRange(editor, range) {
+  const before = document.createRange();
+  before.selectNodeContents(editor);
+  before.setEnd(range.startContainer, range.startOffset);
+  return { start: before.toString().length, end: before.toString().length + range.toString().length };
+}
+
+function restoreRangeFromTextOffsets(editor, offsets) {
+  const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+  let position = 0;
+  let start = null;
+  let end = null;
+  let node;
+  while ((node = walker.nextNode())) {
+    const next = position + node.length;
+    if (!start && offsets.start <= next) start = { node, offset: Math.max(0, offsets.start - position) };
+    if (!end && offsets.end <= next) { end = { node, offset: Math.max(0, offsets.end - position) }; break; }
+    position = next;
+  }
+  if (!start || !end) return null;
+  const range = document.createRange();
+  range.setStart(start.node, Math.min(start.offset, start.node.length));
+  range.setEnd(end.node, Math.min(end.offset, end.node.length));
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+  return range;
+}
+
+function createRichTextController(widget) {
+  const editor = widget.input;
+  const toolbar = widget.querySelector('.itarea__format-bar');
+  const palette = widget.querySelector('[data-color-palette]');
+  const colorToggle = widget.querySelector('[data-color-toggle]');
+  const fontSelect = widget.querySelector('[data-format-font]');
+  const sizeSelect = widget.querySelector('[data-format-size]');
+  const weightSelect = widget.querySelector('[data-format-weight]');
+  let savedRange = null;
+
+  const elementsInRange = range => {
+    if (range.collapsed) {
+      const element = range.startContainer.nodeType === Node.ELEMENT_NODE ? range.startContainer : range.startContainer.parentElement;
+      return element ? [element] : [];
+    }
+    const elements = [];
+    const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) if (rangeOverlapsTextNode(range, node)) elements.push(node.parentElement);
+    return elements.filter(Boolean);
+  };
+
+  const oneComputedValue = (range, property, normalize = value => value) => {
+    const values = new Set(elementsInRange(range).map(element => normalize(getComputedStyle(element)[property])).filter(Boolean));
+    return values.size === 1 ? [...values][0] : '';
+  };
+
+  const updateStates = () => {
+    toolbar.querySelectorAll('[data-format-command]').forEach(button => {
+      const active = document.queryCommandState(button.dataset.formatCommand);
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+    if (!savedRange) return;
+    const size = oneComputedValue(savedRange, 'fontSize', value => `${Math.round(Number.parseFloat(value))}px`);
+    sizeSelect.value = SIZE_OPTIONS.includes(Number.parseInt(size, 10)) ? size : '';
+    const weight = oneComputedValue(savedRange, 'fontWeight', value => value === 'normal' ? '400' : value === 'bold' ? '700' : String(Math.round(Number.parseInt(value, 10) / 100) * 100));
+    weightSelect.value = WEIGHT_OPTIONS.some(([, value]) => value === weight) ? weight : '';
+    const computedFamily = oneComputedValue(savedRange, 'fontFamily', value => value.toLowerCase().replaceAll('"', '').replaceAll("'", ''));
+    const matchingFont = [...fontSelect.options].find(option => {
+      if (!option.value || !computedFamily) return false;
+      const primary = option.value.split(',')[0].trim().toLowerCase().replaceAll('"', '').replaceAll("'", '');
+      return computedFamily.includes(primary);
+    });
+    fontSelect.value = matchingFont?.value || '';
+  };
+
+  const remember = () => {
+    const range = selectionInside(editor);
+    if (range) { savedRange = range.cloneRange(); updateStates(); }
+    return savedRange;
+  };
+  const restore = () => {
+    if (!savedRange || !editor.contains(savedRange.commonAncestorContainer)) return false;
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(savedRange.cloneRange());
+    return true;
+  };
+  const changed = () => {
+    editor.dispatchEvent(new Event('input', { bubbles: true }));
+    remember();
+    widget.endHistoryBatch();
+  };
+  const command = (name, value = null) => {
+    widget.beginHistoryBatch();
+    if (!restore()) editor.focus();
+    document.execCommand('styleWithCSS', false, true);
+    document.execCommand(name, false, value);
+    changed();
+  };
+  const applyStyle = (property, value) => {
+    widget.beginHistoryBatch();
+    if (!restore()) editor.focus();
+    const selection = window.getSelection();
+    if (!selection?.rangeCount) { widget.endHistoryBatch(); return; }
+    const range = selection.getRangeAt(0);
+    if (range.collapsed) {
+      const span = document.createElement('span');
+      span.style.setProperty(property, value);
+      const text = document.createTextNode('\u200b');
+      span.append(text); range.insertNode(span);
+      range.setStart(text, 1); range.collapse(true);
+      selection.removeAllRanges(); selection.addRange(range); savedRange = range.cloneRange();
+    } else {
+      const offsets = textOffsetsForRange(editor, range);
+      const textNodes = [];
+      const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+      let node;
+      while ((node = walker.nextNode())) {
+        if (!rangeOverlapsTextNode(range, node)) continue;
+        const start = node === range.startContainer ? range.startOffset : 0;
+        const end = node === range.endContainer ? range.endOffset : node.length;
+        if (end > start) textNodes.push({ node, start, end });
+      }
+      textNodes.reverse().forEach(({ node: textNode, start, end }) => {
+        if (end < textNode.length) textNode.splitText(end);
+        const selectedNode = start > 0 ? textNode.splitText(start) : textNode;
+        const span = document.createElement('span');
+        span.style.setProperty(property, value);
+        selectedNode.replaceWith(span);
+        span.append(selectedNode);
+      });
+      editor.normalize();
+      savedRange = restoreRangeFromTextOffsets(editor, offsets) || savedRange;
+    }
+    changed();
+  };
+  const blocksInSelection = () => {
+    if (!restore()) editor.focus();
+    const range = selectionInside(editor);
+    if (!range) return [];
+    const blocks = new Set();
+    const add = node => {
+      const element = node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement;
+      blocks.add(element?.closest('div,p,li') || editor);
+    };
+    add(range.startContainer); add(range.endContainer);
+    const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) { try { if (range.intersectsNode(node)) add(node); } catch {} }
+    return [...blocks].filter(Boolean);
+  };
+
+  toolbar.addEventListener('pointerdown', event => {
+    if (!event.target.closest('input[type="color"]')) { remember(); if (event.target.closest('button')) event.preventDefault(); }
+  });
+  fontSelect.addEventListener('pointerdown', remember);
+  toolbar.querySelectorAll('[data-format-command]').forEach(button => button.addEventListener('click', () => command(button.dataset.formatCommand)));
+  fontSelect.addEventListener('change', event => { if (event.target.value) applyStyle('font-family', event.target.value); });
+  sizeSelect.addEventListener('change', event => { if (event.target.value) applyStyle('font-size', event.target.value); });
+  weightSelect.addEventListener('change', event => { if (event.target.value) applyStyle('font-weight', event.target.value); });
+  colorToggle.addEventListener('click', () => { palette.hidden = !palette.hidden; colorToggle.setAttribute('aria-expanded', String(!palette.hidden)); });
+  widget.querySelectorAll('[data-format-color]').forEach(button => button.addEventListener('click', () => { applyStyle('color', button.dataset.formatColor); palette.hidden = true; }));
+  widget.querySelector('[data-custom-color]').addEventListener('change', event => { applyStyle('color', event.target.value); palette.hidden = true; });
+  widget.querySelectorAll('[data-line-spacing]').forEach(button => button.addEventListener('click', () => {
+    widget.beginHistoryBatch();
+    const increase = button.dataset.lineSpacing === 'increase';
+    let blocks = blocksInSelection();
+    if (blocks.includes(editor)) {
+      command('formatBlock', 'div');
+      blocks = blocksInSelection();
+    }
+    for (const block of blocks) {
+      const computed = getComputedStyle(block);
+      const current = Number.parseFloat(computed.lineHeight) / Number.parseFloat(computed.fontSize) || 1.5;
+      const next = increase
+        ? (LINE_HEIGHT_STEPS.find(step => step > current + .01) || LINE_HEIGHT_STEPS.at(-1))
+        : ([...LINE_HEIGHT_STEPS].reverse().find(step => step < current - .01) || LINE_HEIGHT_STEPS[0]);
+      block.style.lineHeight = String(next);
+    }
+    changed();
+  }));
+  widget.querySelectorAll('[data-indent]').forEach(button => button.addEventListener('click', () => {
+    widget.beginHistoryBatch();
+    const direction = button.dataset.indent === 'increase' ? 1 : -1;
+    let blocks = blocksInSelection();
+    if (blocks.includes(editor)) {
+      command('formatBlock', 'div');
+      blocks = blocksInSelection();
+    }
+    for (const block of blocks.filter(element => element !== editor)) {
+      const current = block.style.marginLeft.endsWith('ch') ? Number.parseInt(block.style.marginLeft, 10) || 0 : 0;
+      const next = Math.min(MAX_INDENT_CH, Math.max(0, current + direction * INDENT_STEP_CH));
+      if (next) block.style.marginLeft = `${next}ch`; else block.style.removeProperty('margin-left');
+    }
+    changed();
+  }));
+  widget.querySelector('[data-format-link]').addEventListener('click', () => {
+    if (!restore()) return;
+    const range = selectionInside(editor);
+    const active = (range?.startContainer.nodeType === Node.ELEMENT_NODE ? range.startContainer : range?.startContainer.parentElement)?.closest?.('a');
+    const address = window.prompt('Web address (http:// or https://). Leave blank to remove the current link.', active?.href || 'https://');
+    if (address === null) return;
+    if (!address.trim()) command('unlink');
+    else if (/^https?:\/\//i.test(address.trim())) command('createLink', address.trim());
+    else window.alert('Please enter a web address beginning with http:// or https://');
+  });
+  widget.querySelector('[data-format-clear]').addEventListener('click', () => { command('removeFormat'); command('unlink'); });
+  editor.addEventListener('mouseup', remember);
+  editor.addEventListener('keyup', remember);
+  editor.addEventListener('focus', remember);
+  const outside = event => {
+    if (!palette.contains(event.target) && !colorToggle.contains(event.target)) palette.hidden = true;
+  };
+  const escape = event => {
+    if (event.key === 'Escape' && !palette.hidden) { event.preventDefault(); event.stopPropagation(); palette.hidden = true; }
+  };
+  document.addEventListener('click', outside);
+  document.addEventListener('keydown', escape, true);
+
+  return {
+    rememberSelection: remember,
+    restoreSelection: restore,
+    get html() { return sanitizeRichHtml(editor.innerHTML); },
+    setHtml(html) { editor.innerHTML = sanitizeRichHtml(html); },
+    destroy() { document.removeEventListener('click', outside); document.removeEventListener('keydown', escape, true); },
   };
 }
 
@@ -803,18 +1127,28 @@ let disableSequence = ' = ';
 const MIN_FONT_SIZE = 14;
 const MAX_FONT_SIZE = 48;
 const HISTORY_LIMIT = 100;
-const WIDGET_VERSION = '1.2.0';
-const WIDGET_UPDATED = 'September 10, 2026';
-let pageFontSize = '22px';
+const WIDGET_VERSION = '1.3.0';
+const WIDGET_UPDATED = 'September 11, 2026';
+let pageFontSize = '24px';
 const settingsIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.43 12.98c.04-.32.07-.65.07-.98s-.02-.66-.07-.98l2.11-1.65a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.61-.22l-2.49 1a7.36 7.36 0 0 0-1.69-.98L14.5 2.42A.49.49 0 0 0 14 2h-4a.49.49 0 0 0-.49.42l-.38 2.65c-.61.25-1.18.59-1.69.98l-2.49-1a.49.49 0 0 0-.61.22l-2 3.46a.5.5 0 0 0 .12.64l2.11 1.65c-.04.32-.08.65-.08.98s.03.66.08.98l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46c.12.22.38.31.61.22l2.49-1c.51.4 1.08.73 1.69.98l.38 2.65c.04.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.18-.58 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.65ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z"/></svg>';
 const copyIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1Zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2Zm0 16H8V7h11v14Z"/></svg>';
 const copiedIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 16.2-3.5-3.5-1.4 1.4L9 19 20.3 7.7l-1.4-1.4L9 16.2Z"/></svg>';
 const helpIcon = '<svg viewBox="0 -960 960 960" aria-hidden="true"><path d="M513.5-254.5Q528-269 528-290t-14.5-35.5Q499-340 478-340t-35.5 14.5Q428-311 428-290t14.5 35.5Q457-240 478-240t35.5-14.5ZM442-394h74q0-33 7.5-52t42.5-52q26-26 41-49.5t15-56.5q0-56-41-86t-97-30q-57 0-92.5 30T342-618l66 26q5-18 22.5-39t53.5-21q32 0 48 17.5t16 38.5q0 20-12 37.5T506-526q-44 39-54 59t-10 73Zm38 314q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>';
 const collapseControlsIcon = '<svg viewBox="0 -960 960 960" aria-hidden="true"><path d="m136-80-56-56 264-264H160v-80h320v320h-80v-184L136-80Zm344-400v-320h80v184l264-264 56 56-264 264h184v80H480Z"/></svg>';
 const expandControlsIcon = '<svg viewBox="0 -960 960 960" aria-hidden="true"><path d="M120-120v-320h80v184l504-504H520v-80h320v320h-80v-184L256-200h184v80H120Z"/></svg>';
+const newIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2Z"/></svg>';
+const duplicateIcon = '<svg viewBox="0 -960 960 960" aria-hidden="true"><path d="M120-120q-33 0-56.5-23.5T40-200v-520h80v520h680v80H120Zm160-160q-33 0-56.5-23.5T200-360v-440q0-33 23.5-56.5T280-880h200l80 80h280q33 0 56.5 23.5T920-720v360q0 33-23.5 56.5T840-280H280Zm0-80h560v-360H527l-80-80H280v440Zm0 0v-440 440Z"/></svg>';
+const autoExpandIcon = '<svg viewBox="0 -960 960 960" aria-hidden="true"><path d="M160-80v-80h640v80H160Zm320-120L320-360l56-56 64 62v-252l-64 62-56-56 160-160 160 160-56 56-64-62v252l64-62 56 56-160 160ZM160-800v-80h640v80H160Z"/></svg>';
+const tagsIcon = '<svg viewBox="0 -960 960 960" aria-hidden="true"><path d="M480-240 63-467l84-46 333 182 333-182 84 46-417 227Zm0 160L63-307l84-46 333 182 333-182 84 46L480-80Zm0-320L40-640l440-240 40 22v178h327l73 40-440 240Zm0-91 200-109H440v-167L207-640l273 149Zm-40-109Z"/></svg>';
+const deleteIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12ZM8 9h8v10H8V9Zm7.5-5-1-1h-5l-1 1H5v2h14V4h-3.5Z"/></svg>';
+const DEFAULT_TAG_NAME = 'type';
+const DEFAULT_TAG_VALUE = 'rich-text-audio';
+const MAX_TAGS = 100;
+const MAX_TAG_NAME_LENGTH = 80;
+const MAX_TAG_VALUE_LENGTH = 500;
 function normalizeFontSize(size) {
   const value = Math.round(Number.parseFloat(size));
-  return `${Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, Number.isFinite(value) ? value : 22))}px`;
+  return `${Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, Number.isFinite(value) ? value : 24))}px`;
 }
 function configureITranslator(config) {
   pageConfig = config;
@@ -852,6 +1186,13 @@ function setITranslatorDisableSequence(enabled, sequence = disableSequence) {
 
 function indicator(widget) { return widget.querySelector('[data-mode-indicator]'); }
 function escapeHtml(value) { return String(value).replace(/[&<>'"]/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character]); }
+function generatedWidgetId() {
+  return `itarea-${globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
+}
+
+function tagsDialogMarkup() {
+  return `<div class="itarea__tags-overlay" data-tags-dialog hidden><section class="itarea__tags-dialog" role="dialog" aria-modal="true" aria-label="Text area tags"><button type="button" class="itarea__tags-close" data-tags-close aria-label="Close tags">×</button><h2>Tags</h2><p>Add metadata that the containing page can query from this text area.</p><form class="itarea__tags-form" data-tags-form><label>Name <input type="text" data-tag-name maxlength="${MAX_TAG_NAME_LENGTH}" autocomplete="off"></label><span aria-hidden="true">=</span><label>Value <input type="text" data-tag-value maxlength="${MAX_TAG_VALUE_LENGTH}" autocomplete="off"></label><button type="submit">Add tag</button></form><p class="itarea__tags-error" data-tags-error role="alert" hidden></p><div class="itarea__tags-table-wrap"><table class="itarea__tags-table"><thead><tr><th>Name</th><th>Value</th><th>Delete</th></tr></thead><tbody data-tags-body></tbody></table></div></section></div>`;
+}
 
 class ITranslatorTextarea extends HTMLElement {
   connectedCallback() {
@@ -860,16 +1201,40 @@ class ITranslatorTextarea extends HTMLElement {
     const targets = Object.entries(pageConfig.targets)
       .filter(([id]) => id !== 'sanskrit-iast')
       .map(([id, target]) => `<option value="${id}">${target.label}</option>`).join('');
-    const fonts = Object.entries(pageConfig.fonts?.options || { system: { label: 'System default' } })
-      .map(([id, font]) => `<option value="${id}">${font.label}</option>`).join('');
+    const fontOptions = pageConfig.fonts?.options || { system: { label: 'System default', family: 'system-ui' } };
     const mappingRows = Object.entries({ ...pageConfig.tokens, ...pageConfig.aliases, ...pageConfig.punctuation })
       .sort(([left], [right]) => left.localeCompare(right))
       .map(([input, output]) => `<tr><td><code>${escapeHtml(input)}</code></td><td>${escapeHtml(output)}</td></tr>`).join('');
-    this.innerHTML = `<section class="itarea"><div class="itarea__bar"><button type="button" data-mode="itrans" class="active">iTrans</button><button type="button" data-mode="roman">Roman (IAST)</button><button type="button" data-mode="english">English</button><button type="button" class="itarea__record-button" data-audio-record title="Record or edit audio" aria-label="Record or edit audio">${audioIcons.record}</button><label class="itarea__font-size-control">Text size <input type="number" data-font-size-value min="${MIN_FONT_SIZE}" max="${MAX_FONT_SIZE}" value="22" aria-label="Text size in pixels"><span>px</span></label></div><div class="itarea__editor"><textarea spellcheck="false" aria-label="${label}" placeholder="Type Sanskrit with ITRANS"></textarea><div class="itarea__resize-handle" data-resize-handle title="Drag to resize text area" aria-label="Drag to resize text area" role="separator"></div><span class="itarea__top-tabs"><button type="button" class="itarea__help-button itarea__top-help" data-help title="Widget help" aria-label="Widget help">${helpIcon}</button><span class="itarea__document-controls"><button type="button" data-document-save title="Save iTranslator document" aria-label="Save iTranslator document">${documentIcons.save}</button><button type="button" data-document-open title="Open iTranslator document" aria-label="Open iTranslator document">${documentIcons.open}</button><input type="file" data-document-file accept=".itarea.zip,application/zip" hidden><span class="itarea__document-feedback" data-document-feedback role="status" aria-live="polite" hidden></span></span><span class="itarea__mode-tab"><span data-mode-indicator></span><button type="button" class="itarea__tab-settings" data-settings title="Language settings" aria-label="Language settings">${settingsIcon}</button></span></span><div class="itarea__actions"><button type="button" class="itarea__icon" data-copy title="Copy text" aria-label="Copy text">${copyIcon}</button><button type="button" class="itarea__icon itarea__audio-play" data-audio-play title="No recorded audio" aria-label="Play recorded audio" disabled>${audioIcons.play}</button></div><div class="itarea__settings" hidden><label>Language <select data-target-select>${targets}</select></label><label>Font <select data-font-select>${fonts}</select></label><label class="itarea__auto-expand">Auto-expand <input type="checkbox" data-auto-expand checked></label><label class="itarea__global-settings">Apply lang, font, size globally <input type="checkbox" data-apply-globally></label></div><div class="itarea__help-overlay" data-help-dialog hidden><section class="itarea__help" role="dialog" aria-modal="true" aria-label="iTranslator Text Area help"><button type="button" class="itarea__help-close" data-help-close aria-label="Close help">×</button><h2>iTranslator Text Area</h2><ul><li><strong>iTrans:</strong> type ASCII ITRANS; use Ctrl+S or Ctrl+I.</li><li><strong>Roman:</strong> creates IAST; use Ctrl+R.</li><li><strong>English:</strong> leaves text unchanged; use Ctrl+E, Ctrl+O, or Escape.</li><li>Enter a pixel value to change text size. The settings tab changes language, font, and auto-expand.</li><li>The microphone opens the recorder and waveform editor. Saved audio remains in this browser for 30 days.</li><li>Save exports the text, mode, language, font, size, and saved audio to one <code>.itarea.zip</code> file. Open restores that file after warning before an overwrite.</li><li>Use the control below Copy and Play to hide or show the controls above the text area.</li><li>Enable <strong>Apply lang, font, size globally</strong> to synchronize those choices across widgets.</li><li>Drag the bottom edge to set a manual height; this turns off auto-expand for that widget.</li></ul><h3>Current ITRANS mappings</h3><p>These mappings come from the active widget configuration. See <a href="https://en.wikipedia.org/wiki/ITRANS" target="_blank" rel="noopener noreferrer">ITRANS on Wikipedia</a> for background and conventions.</p><table class="itarea__mapping-table"><thead><tr><th>Input</th><th>Output</th></tr></thead><tbody>${mappingRows}</tbody></table></section></div>${audioDialogMarkup()}</div></section>`;
-    this.querySelector('.itarea__font-size-control').firstChild?.remove();
+    this.innerHTML = `<section class="itarea"><div class="itarea__bar"><button type="button" data-mode="itrans" class="active">iTrans</button><button type="button" data-mode="roman">Roman</button><button type="button" data-mode="english">English</button><button type="button" class="itarea__record-button" data-audio-record title="Record or edit audio" aria-label="Record or edit audio">${audioIcons.record}</button><button type="button" class="itarea__bar-icon" data-new title="New text area below" aria-label="New text area below">${newIcon}</button><button type="button" class="itarea__bar-icon" data-duplicate title="Duplicate text area below" aria-label="Duplicate text area below">${duplicateIcon}</button><button type="button" class="itarea__bar-icon" data-delete-widget title="Delete this new text area" aria-label="Delete this new text area" hidden>${deleteIcon}</button><label class="itarea__font-size-control">Text size <input type="number" data-font-size-value min="${MIN_FONT_SIZE}" max="${MAX_FONT_SIZE}" value="22" aria-label="Text size in pixels"><span>px</span></label></div>${richTextToolbarMarkup(fontOptions)}<div class="itarea__editor"><div class="itarea__input" contenteditable="true" role="textbox" aria-multiline="true" spellcheck="false" aria-label="${label}" data-placeholder="Type Sanskrit with ITRANS"></div><div class="itarea__resize-handle" data-resize-handle title="Drag to resize text area" aria-label="Drag to resize text area" role="separator"></div><div class="itarea__width-handle" data-width-handle title="Drag to resize widget width" aria-label="Drag to resize widget width" role="separator" hidden></div><span class="itarea__top-tabs"><button type="button" class="itarea__help-button itarea__top-help" data-help title="Widget help" aria-label="Widget help">${helpIcon}</button><span class="itarea__document-controls"><button type="button" data-document-save title="Save iTranslator document — Saved" aria-label="Save iTranslator document — Saved">${documentIcons.save}</button><button type="button" data-document-open title="Open iTranslator document" aria-label="Open iTranslator document">${documentIcons.open}</button><input type="file" data-document-file accept=".itarea.zip,application/zip" hidden><span class="itarea__document-feedback" data-document-feedback role="status" aria-live="polite" hidden></span></span><span class="itarea__mode-tab"><span data-mode-indicator></span><button type="button" class="itarea__tab-settings" data-settings title="Language settings" aria-label="Language settings">${settingsIcon}</button></span></span><div class="itarea__actions"><button type="button" class="itarea__icon itarea__audio-play" data-audio-play title="No recorded audio" aria-label="Play recorded audio" disabled>${audioIcons.play}</button><button type="button" class="itarea__icon" data-copy title="Copy text" aria-label="Copy text">${copyIcon}</button></div><div class="itarea__settings" hidden><label>Language <select data-target-select>${targets}</select></label><label class="itarea__auto-expand">Auto-expand <input type="checkbox" data-auto-expand checked></label><label class="itarea__width-resize">Resize width <input type="checkbox" data-width-resize></label><label class="itarea__duplicate-audio">Include audio when duplicating <input type="checkbox" data-duplicate-audio></label><label class="itarea__global-settings">Apply language and size globally <input type="checkbox" data-apply-globally></label></div><div class="itarea__help-overlay" data-help-dialog hidden><section class="itarea__help" role="dialog" aria-modal="true" aria-label="iTranslator Text Area help"><button type="button" class="itarea__help-close" data-help-close aria-label="Close help">×</button><h2>iTranslator Text Area</h2><ul><li><strong>iTrans:</strong> type ASCII ITRANS; use Ctrl+S or Ctrl+I.</li><li><strong>Roman:</strong> creates IAST; use Ctrl+R.</li><li><strong>English:</strong> leaves text unchanged; use Ctrl+E, Ctrl+O, or Escape.</li><li>Use the formatting row for bold, italic, underline, lists, color, selected font, font size and weight, line spacing, alignment, links, and clear formatting.</li><li>The formatting font, size, color, and weight controls apply to selected text or to subsequent typing at the caret. Enter a pixel value in the upper size field to change the whole editor's default size.</li><li>The microphone opens the recorder and waveform editor. Audio is available until this page is refreshed; use Save to export it.</li><li>The Save dot means the text, formatting, or audio has changed since the last export. Save exports the text, formatting, mode, language, font, size, and audio to one <code>.itarea.zip</code> file.</li><li>New creates an empty text area below; Duplicate copies this widget's settings, formatted text, and optional audio.</li><li>Enable <strong>Resize width</strong> in Settings to drag the widget's right edge.</li><li>Use the control below Copy and Play to hide or show the controls above the text area.</li></ul><h3>Current ITRANS mappings</h3><p>These mappings come from the active widget configuration. See <a href="https://en.wikipedia.org/wiki/ITRANS" target="_blank" rel="noopener noreferrer">ITRANS on Wikipedia</a> for background and conventions.</p><table class="itarea__mapping-table"><thead><tr><th>Input</th><th>Output</th></tr></thead><tbody>${mappingRows}</tbody></table></section></div>${audioDialogMarkup()}</div></section>`;
+    this.querySelector('.itarea__font-size-control')?.remove();
     const controlBar = this.querySelector('.itarea__bar');
+    const formatBar = this.querySelector('.itarea__format-bar');
     const topTabs = this.querySelector('.itarea__top-tabs');
+    const modeButtons = document.createElement('span');
+    modeButtons.className = 'itarea__mode-buttons';
+    const firstModeButton = controlBar.querySelector('[data-mode]');
+    controlBar.insertBefore(modeButtons, firstModeButton);
+    controlBar.querySelectorAll('[data-mode]').forEach(button => modeButtons.append(button));
+    const quickFontControl = formatBar.querySelector('.itarea__format-font');
+    modeButtons.insertAdjacentElement('afterend', quickFontControl);
+    controlBar.append(topTabs);
     const settingsPanel = this.querySelector('.itarea__settings');
+    settingsPanel.querySelector('.itarea__auto-expand')?.remove();
+    const autoExpandToggle = document.createElement('button');
+    autoExpandToggle.type = 'button';
+    autoExpandToggle.className = 'itarea__bar-icon itarea__auto-expand-toggle';
+    autoExpandToggle.dataset.autoExpand = '';
+    autoExpandToggle.innerHTML = autoExpandIcon;
+    this.querySelector('[data-duplicate]').insertAdjacentElement('afterend', autoExpandToggle);
+    const tagsButton = document.createElement('button');
+    tagsButton.type = 'button';
+    tagsButton.className = 'itarea__bar-icon itarea__tags-button';
+    tagsButton.dataset.tags = '';
+    tagsButton.title = 'Tags';
+    tagsButton.setAttribute('aria-label', 'Tags');
+    tagsButton.innerHTML = tagsIcon;
+    autoExpandToggle.insertAdjacentElement('afterend', tagsButton);
+    this.querySelector('.itarea').insertAdjacentHTML('beforeend', tagsDialogMarkup());
     settingsPanel.insertAdjacentHTML('beforeend', `<label class="itarea__disable-sequence"><input type="checkbox" data-disable-sequence-enabled> <span>iTrans disable seq.</span><input type="text" data-disable-sequence maxlength="3" size="3" value=" = " aria-label="iTrans disable sequence"></label><div class="itarea__version">iTranslator ${WIDGET_VERSION}<br>Updated ${WIDGET_UPDATED}</div>`);
     const actions = this.querySelector('.itarea__actions');
     this.querySelector('[data-copy]').insertAdjacentHTML('afterend', '<span class="itarea__copy-feedback" data-copy-feedback role="status" aria-live="polite" hidden>Copied</span>');
@@ -877,6 +1242,7 @@ class ITranslatorTextarea extends HTMLElement {
     const controlsToggle = this.querySelector('[data-controls-toggle]');
     const setControlsVisible = visible => {
       controlBar.hidden = !visible;
+      formatBar.hidden = !visible;
       topTabs.hidden = !visible;
       settingsPanel.hidden = true;
       controlsToggle.innerHTML = visible ? collapseControlsIcon : expandControlsIcon;
@@ -887,12 +1253,21 @@ class ITranslatorTextarea extends HTMLElement {
     setControlsVisible(false);
     this.mode = 'itrans';
     this.rawBuffer = '';
-    this.bufferStart = null;
+    this.bufferRange = null;
     this.autoExpand = true;
+    this._tags = new Map([[DEFAULT_TAG_NAME, DEFAULT_TAG_VALUE]]);
     this.target = pageTarget;
     this.font = pageFont;
     this.fontSize = pageFontSize;
-    this.input = this.querySelector('textarea');
+    this.input = this.querySelector('.itarea__input');
+    this.syncAutoExpandToggle();
+    if (this._initialTags !== undefined) {
+      this.setTags(this._initialTags, { notify: false });
+      delete this._initialTags;
+    }
+    this.renderTags();
+    this.widthResizable = false;
+    this.duplicateAudio = false;
     const audioPlay = this.querySelector('[data-audio-play]');
     this.updateActionVisibility = () => {
       const height = this.input.getBoundingClientRect().height;
@@ -902,7 +1277,7 @@ class ITranslatorTextarea extends HTMLElement {
     this.actionResizeObserver = new ResizeObserver(this.updateActionVisibility);
     this.actionResizeObserver.observe(this.input);
     if (this._initialValue !== undefined) {
-      this.input.value = this._initialValue;
+      this.input.textContent = this._initialValue;
       delete this._initialValue;
     }
     this.history = [];
@@ -911,13 +1286,24 @@ class ITranslatorTextarea extends HTMLElement {
     this.historyTimer = null;
     this.lineRestoreMode = null;
     this.querySelector('[data-target-select]').value = this.target;
-    this.querySelector('[data-font-select]').value = this.font;
     this.updateFontSizeControls();
     this.applyFont();
     this.applyFontSize();
+    const defaultFontOption = fontOptions[this.font];
+    this.querySelector('[data-format-font]').value = defaultFontOption?.stack || defaultFontOption?.family || '';
+    this.querySelector('[data-format-size]').value = '24px';
+    this.querySelector('[data-format-weight]').value = '600';
     this.setMode('itrans');
     this.audioController = createAudioController(this);
     this.documentController = createDocumentController(this, WIDGET_VERSION);
+    this.richTextController = createRichTextController(this);
+    if (this._initialHtml !== undefined) {
+      const initialHtml = this._initialHtml;
+      delete this._initialHtml;
+      this.htmlValue = initialHtml;
+    }
+    const deleteWidget = this.querySelector('[data-delete-widget]');
+    deleteWidget.hidden = !this.hasAttribute('data-itarea-generated');
     controlBar.addEventListener('click', event => {
       const button = event.target.closest('button');
       if (button?.dataset.mode) this.setMode(button.dataset.mode);
@@ -935,7 +1321,13 @@ class ITranslatorTextarea extends HTMLElement {
     document.addEventListener('click', this.closeSettingsWhenClickedOutside);
     document.addEventListener('keydown', this.closeSettingsOnEscape, true);
     const helpDialog = this.querySelector('[data-help-dialog]');
-    helpDialog.querySelector('h2').insertAdjacentHTML('afterend', '<p><strong>Shortcuts:</strong> Ctrl+S/Ctrl+I toggle iTrans and English; Ctrl+R toggles Roman and iTrans; Ctrl+O toggles English and iTrans; Ctrl+E and Escape select English. Ctrl+Z/Ctrl+U undo and Ctrl+Shift+Z/Ctrl+Shift+U redo.</p><p>Optionally enable the global <strong>iTrans disable seq.</strong> setting. Typing its sequence (default: <code> = </code>) temporarily switches the current line to English; Enter restores the previous transliteration mode.</p>');
+    const legacySizeHelp = [...helpDialog.querySelectorAll('li')]
+      .find(item => item.textContent.includes('upper size field'));
+    if (legacySizeHelp) {
+      legacySizeHelp.textContent = 'The font selector beside the modes and the formatting size, color, and weight controls apply to selected text or to subsequent typing at the caret.';
+      legacySizeHelp.insertAdjacentHTML('afterend', '<li>Use the Expand icon beside Duplicate to turn automatic height expansion on or off.</li><li>Use Tags to attach queryable name/value metadata. The required type=rich-text-audio tag cannot be changed or deleted.</li>');
+    }
+    helpDialog.querySelector('h2').insertAdjacentHTML('afterend', '<p><strong>Shortcuts:</strong> Ctrl+S/Ctrl+I toggle iTrans and English; Ctrl+R toggles Roman and iTrans; Ctrl+O toggles English and iTrans; Ctrl+E and Escape select English. Ctrl+Z/Ctrl+U undo and Ctrl+Shift+Z/Ctrl+Shift+U redo.</p><p>The default text style is 24px Demi. ITF Devanagari is used when installed, with bundled Noto Sans Devanagari as fallback. Formatting controls include four-character decrease/increase indentation.</p><p>Optionally enable the global <strong>iTrans disable seq.</strong> setting. Typing its sequence (default: <code> = </code>) temporarily switches the current line to English; Enter restores the previous transliteration mode.</p>');
     this.querySelector('[data-help]').addEventListener('click', () => { helpDialog.hidden = false; });
     this.querySelector('[data-help-close]').addEventListener('click', () => { helpDialog.hidden = true; });
     helpDialog.addEventListener('click', event => { if (event.target === helpDialog) helpDialog.hidden = true; });
@@ -945,35 +1337,60 @@ class ITranslatorTextarea extends HTMLElement {
       }
     };
     document.addEventListener('keydown', this.closeHelpOnEscape, true);
+    const tagsDialog = this.querySelector('[data-tags-dialog]');
+    const tagNameInput = this.querySelector('[data-tag-name]');
+    const tagValueInput = this.querySelector('[data-tag-value]');
+    const closeTags = () => {
+      tagsDialog.hidden = true;
+      this.querySelector('[data-tags-error]').hidden = true;
+      tagsButton.focus();
+    };
+    tagsButton.addEventListener('click', () => {
+      this.renderTags();
+      tagsDialog.hidden = false;
+      tagNameInput.focus();
+    });
+    this.querySelector('[data-tags-close]').addEventListener('click', closeTags);
+    tagsDialog.addEventListener('click', event => { if (event.target === tagsDialog) closeTags(); });
+    this.closeTagsOnEscape = event => {
+      if (event.key === 'Escape' && !tagsDialog.hidden) {
+        event.preventDefault();
+        event.stopPropagation();
+        closeTags();
+      }
+    };
+    document.addEventListener('keydown', this.closeTagsOnEscape, true);
+    this.querySelector('[data-tags-form]').addEventListener('submit', event => {
+      event.preventDefault();
+      try {
+        this.setTag(tagNameInput.value, tagValueInput.value);
+        tagNameInput.value = '';
+        tagValueInput.value = '';
+        this.querySelector('[data-tags-error]').hidden = true;
+        tagNameInput.focus();
+      } catch (error) {
+        const message = this.querySelector('[data-tags-error]');
+        message.textContent = error.message;
+        message.hidden = false;
+      }
+    });
+    this.querySelector('[data-tags-body]').addEventListener('click', event => {
+      const button = event.target.closest('[data-tag-delete]');
+      if (button) this.removeTag(button.dataset.tagDelete);
+    });
     const applyGlobally = this.querySelector('[data-apply-globally]');
     applyGlobally.addEventListener('change', () => {
       if (applyGlobally.checked) {
         setITranslatorTarget(this.target);
-        setITranslatorFont(this.font);
         setITranslatorFontSize(this.fontSize);
       }
     });
     this.querySelector('[data-target-select]').addEventListener('change', event => {
       if (applyGlobally.checked) setITranslatorTarget(event.target.value); else this.setTarget(event.target.value);
     });
-    this.querySelector('[data-font-select]').addEventListener('change', event => {
-      if (applyGlobally.checked) setITranslatorFont(event.target.value); else this.setFont(event.target.value);
-    });
-    const setSize = value => {
-      if (applyGlobally.checked) setITranslatorFontSize(value); else this.setFontSize(value);
-    };
-    const fontSizeInput = this.querySelector('[data-font-size-value]');
-    fontSizeInput.addEventListener('change', event => setSize(event.target.value));
-    fontSizeInput.addEventListener('keydown', event => {
-      if (event.key !== 'Enter') return;
-      event.preventDefault();
-      setSize(event.target.value);
-      this.input.focus();
-    });
-    this.querySelector('[data-auto-expand]').addEventListener('change', event => {
-      this.autoExpand = event.target.checked;
-      if (this.autoExpand) this.adjustHeight(); else this.input.style.height = '';
-    });
+    autoExpandToggle.addEventListener('click', () => this.setAutoExpand(!this.autoExpand));
+    this.querySelector('[data-width-resize]').addEventListener('change', event => this.setWidthResizable(event.target.checked));
+    this.querySelector('[data-duplicate-audio]').addEventListener('change', event => { this.duplicateAudio = event.target.checked; });
     const disableToggle = this.querySelector('[data-disable-sequence-enabled]');
     const disableInput = this.querySelector('[data-disable-sequence]');
     this.syncDisableSequenceSetting = () => {
@@ -984,13 +1401,30 @@ class ITranslatorTextarea extends HTMLElement {
     disableToggle.addEventListener('change', () => setITranslatorDisableSequence(disableToggle.checked, disableInput.value));
     disableInput.addEventListener('input', () => setITranslatorDisableSequence(disableToggle.checked, disableInput.value));
     this.querySelector('[data-resize-handle]').addEventListener('pointerdown', event => this.startManualResize(event));
+    this.querySelector('[data-width-handle]').addEventListener('pointerdown', event => this.startManualWidthResize(event));
+    this.querySelector('[data-new]').addEventListener('click', () => this.createSibling(false));
+    this.querySelector('[data-duplicate]').addEventListener('click', () => this.createSibling(true));
+    deleteWidget.addEventListener('click', () => this.deleteGeneratedWidget());
     this.querySelector('[data-copy]').addEventListener('click', async () => {
       this.flushBuffer();
       const button = this.querySelector('[data-copy]');
       const feedback = this.querySelector('[data-copy-feedback]');
       clearTimeout(this.copyFeedbackTimer);
       try {
-        await navigator.clipboard.writeText(this.input.value);
+        const plain = this.value;
+        const html = this.htmlValue;
+        if (navigator.clipboard.write && globalThis.ClipboardItem) {
+          try {
+            await navigator.clipboard.write([new ClipboardItem({
+              'text/plain': new Blob([plain], { type: 'text/plain' }),
+              'text/html': new Blob([html], { type: 'text/html' }),
+            })]);
+          } catch {
+            // Some browsers expose rich clipboard APIs but deny them on local
+            // file pages. Preserve the existing plain-text copy behavior.
+            await navigator.clipboard.writeText(plain);
+          }
+        } else await navigator.clipboard.writeText(plain);
         button.innerHTML = copiedIcon;
         button.classList.add('is-copied');
         button.title = 'Copied';
@@ -1015,6 +1449,7 @@ class ITranslatorTextarea extends HTMLElement {
       this.adjustHeight();
       this.scheduleHistoryBoundary();
       this.audioController?.markTextChanged();
+      this.documentController?.markDirty();
     });
     this.input.addEventListener('paste', event => this.handlePaste(event));
     this.input.addEventListener('blur', () => this.flushBuffer());
@@ -1029,17 +1464,20 @@ class ITranslatorTextarea extends HTMLElement {
     document.removeEventListener('click', this.closeSettingsWhenClickedOutside);
     document.removeEventListener('keydown', this.closeSettingsOnEscape, true);
     document.removeEventListener('keydown', this.closeHelpOnEscape, true);
+    document.removeEventListener('keydown', this.closeTagsOnEscape, true);
     this.actionResizeObserver?.disconnect();
     this.audioController?.destroy();
     this.documentController?.destroy();
+    this.richTextController?.destroy();
     clearTimeout(this.copyFeedbackTimer);
     clearTimeout(this.historyTimer);
   }
 
   applyFont() {
-    const family = pageConfig.fonts?.options?.[this.font]?.family || 'system-ui';
+    const option = pageConfig.fonts?.options?.[this.font];
+    const family = option?.family || 'system-ui';
     const cssFamily = family === 'system-ui' ? 'system-ui' : `"${family}"`;
-    this.style.setProperty('--itarea-font-family', `${cssFamily}, system-ui, sans-serif`);
+    this.style.setProperty('--itarea-font-family', option?.stack || `${cssFamily}, system-ui, sans-serif`);
   }
 
   setTarget(target) {
@@ -1048,6 +1486,7 @@ class ITranslatorTextarea extends HTMLElement {
     this.target = target;
     this.querySelector('[data-target-select]').value = target;
     this.updateModeIndicator();
+    this.documentController?.markDirty();
   }
 
   supportsTarget(target) { return Boolean(pageConfig.targets[target]); }
@@ -1055,8 +1494,8 @@ class ITranslatorTextarea extends HTMLElement {
   setFont(font) {
     if (!pageConfig.fonts?.options?.[font]) throw new Error(`Unsupported font: ${font}`);
     this.font = font;
-    this.querySelector('[data-font-select]').value = font;
     this.applyFont();
+    this.documentController?.markDirty();
   }
 
   setFontSize(size) {
@@ -1064,6 +1503,7 @@ class ITranslatorTextarea extends HTMLElement {
     this.updateFontSizeControls();
     this.applyFontSize();
     this.adjustHeight();
+    this.documentController?.markDirty();
   }
 
   applyFontSize() {
@@ -1072,7 +1512,8 @@ class ITranslatorTextarea extends HTMLElement {
 
   updateFontSizeControls() {
     const value = Number.parseInt(this.fontSize, 10);
-    this.querySelector('[data-font-size-value]').value = value;
+    const defaultSizeInput = this.querySelector('[data-font-size-value]');
+    if (defaultSizeInput) defaultSizeInput.value = value;
   }
 
   adjustHeight() {
@@ -1081,14 +1522,115 @@ class ITranslatorTextarea extends HTMLElement {
     this.input.style.height = `${Math.max(this.input.scrollHeight, 128)}px`;
   }
 
+  syncAutoExpandToggle() {
+    const toggle = this.querySelector('[data-auto-expand]');
+    if (!toggle) return;
+    const label = this.autoExpand ? 'Auto-expand on' : 'Auto-expand off';
+    toggle.classList.toggle('active', this.autoExpand);
+    toggle.setAttribute('aria-pressed', String(this.autoExpand));
+    toggle.setAttribute('aria-label', label);
+    toggle.title = label;
+  }
+
+  setAutoExpand(enabled, updateHeight = true) {
+    this.autoExpand = Boolean(enabled);
+    this.syncAutoExpandToggle();
+    if (!updateHeight) return;
+    if (this.autoExpand) this.adjustHeight();
+    else this.input.style.height = '';
+  }
+
+  get tags() {
+    const source = this._tags || new Map([[DEFAULT_TAG_NAME, DEFAULT_TAG_VALUE]]);
+    return [...source].map(([name, value]) => ({ name, value }));
+  }
+
+  set tags(value) {
+    if (!this.isConnected || !this._tags) this._initialTags = value;
+    else this.setTags(value);
+  }
+
+  getTag(name) {
+    return this._tags?.get(String(name).trim());
+  }
+
+  setTags(value, { notify = true } = {}) {
+    const entries = Array.isArray(value)
+      ? value.map(tag => [tag?.name, tag?.value])
+      : Object.entries(value || {});
+    if (entries.length > MAX_TAGS) throw new Error(`A text area can have at most ${MAX_TAGS} tags.`);
+    const next = new Map([[DEFAULT_TAG_NAME, DEFAULT_TAG_VALUE]]);
+    for (const [rawName, rawValue] of entries) {
+      const name = String(rawName ?? '').trim();
+      const tagValue = String(rawValue ?? '').trim();
+      if (!name || !tagValue) throw new Error('Tag name and value are required.');
+      if (name.length > MAX_TAG_NAME_LENGTH || tagValue.length > MAX_TAG_VALUE_LENGTH) throw new Error('A tag name or value is too long.');
+      if (name === DEFAULT_TAG_NAME && tagValue !== DEFAULT_TAG_VALUE) throw new Error(`The required ${DEFAULT_TAG_NAME} tag cannot be changed.`);
+      if (name !== DEFAULT_TAG_NAME) next.set(name, tagValue);
+    }
+    this._tags = next;
+    this.renderTags();
+    if (notify) this.notifyTagsChanged();
+  }
+
+  setTag(name, value) {
+    const cleanName = String(name ?? '').trim();
+    const cleanValue = String(value ?? '').trim();
+    if (!cleanName || !cleanValue) throw new Error('Tag name and value are required.');
+    if (cleanName.length > MAX_TAG_NAME_LENGTH || cleanValue.length > MAX_TAG_VALUE_LENGTH) throw new Error('A tag name or value is too long.');
+    if (cleanName === DEFAULT_TAG_NAME) {
+      if (cleanValue !== DEFAULT_TAG_VALUE) throw new Error(`The required ${DEFAULT_TAG_NAME} tag cannot be changed.`);
+      return;
+    }
+    if (!this._tags.has(cleanName) && this._tags.size >= MAX_TAGS) throw new Error(`A text area can have at most ${MAX_TAGS} tags.`);
+    if (this._tags.get(cleanName) === cleanValue) return;
+    this._tags.set(cleanName, cleanValue);
+    this.renderTags();
+    this.notifyTagsChanged();
+  }
+
+  removeTag(name) {
+    const cleanName = String(name ?? '').trim();
+    if (!cleanName || cleanName === DEFAULT_TAG_NAME || !this._tags.delete(cleanName)) return false;
+    this.renderTags();
+    this.notifyTagsChanged();
+    return true;
+  }
+
+  renderTags() {
+    const body = this.querySelector?.('[data-tags-body]');
+    if (!body || !this._tags) return;
+    body.replaceChildren();
+    for (const [name, value] of this._tags) {
+      const row = document.createElement('tr');
+      const nameCell = document.createElement('td');
+      const valueCell = document.createElement('td');
+      const deleteCell = document.createElement('td');
+      nameCell.textContent = name;
+      valueCell.textContent = value;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = 'Delete';
+      button.dataset.tagDelete = name;
+      button.disabled = name === DEFAULT_TAG_NAME;
+      button.title = button.disabled ? 'Required tag — cannot be deleted' : `Delete ${name}`;
+      deleteCell.append(button);
+      row.append(nameCell, valueCell, deleteCell);
+      body.append(row);
+    }
+  }
+
+  notifyTagsChanged() {
+    const detail = { tags: this.tags };
+    this.dispatchEvent(new CustomEvent('tagschange', { bubbles: true, detail }));
+  }
+
   startManualResize(event) {
     event.preventDefault();
     const startY = event.clientY;
     const startHeight = this.input.getBoundingClientRect().height;
     const minHeight = parseFloat(getComputedStyle(this.input).minHeight);
-    const toggle = this.querySelector('[data-auto-expand]');
-    this.autoExpand = false;
-    toggle.checked = false;
+    this.setAutoExpand(false, false);
     const resize = move => {
       this.input.style.height = `${Math.max(minHeight, startHeight + move.clientY - startY)}px`;
       this.updateActionVisibility();
@@ -1101,29 +1643,101 @@ class ITranslatorTextarea extends HTMLElement {
     window.addEventListener('pointerup', finish, { once: true });
   }
 
+  setWidthResizable(enabled) {
+    this.widthResizable = Boolean(enabled);
+    const handle = this.querySelector('[data-width-handle]');
+    const toggle = this.querySelector('[data-width-resize]');
+    handle.hidden = !this.widthResizable;
+    toggle.checked = this.widthResizable;
+    if (this.widthResizable) {
+      this.style.display = 'block';
+      this.style.maxWidth = '100%';
+      this.style.width = `${Math.round(this.getBoundingClientRect().width)}px`;
+    } else {
+      this.style.width = '';
+      this.style.maxWidth = '';
+    }
+  }
+
+  startManualWidthResize(event) {
+    if (!this.widthResizable) return;
+    event.preventDefault();
+    const startX = event.clientX;
+    const box = this.getBoundingClientRect();
+    const startWidth = box.width;
+    const maxWidth = Math.max(260, (this.parentElement?.getBoundingClientRect().right || box.right) - box.left);
+    const resize = move => {
+      this.style.width = `${Math.round(Math.min(maxWidth, Math.max(260, startWidth + move.clientX - startX)))}px`;
+      this.adjustHeight();
+    };
+    const finish = () => {
+      window.removeEventListener('pointermove', resize);
+      window.removeEventListener('pointerup', finish);
+    };
+    window.addEventListener('pointermove', resize);
+    window.addEventListener('pointerup', finish, { once: true });
+  }
+
+  async createSibling(duplicate) {
+    const created = document.createElement('i-translator-textarea');
+    created.setAttribute('label', this.getAttribute('label') || 'Text');
+    created.setAttribute('audio-id', generatedWidgetId());
+    created.setAttribute('data-itarea-generated', '');
+    this.insertAdjacentElement('afterend', created);
+    created.setTarget(this.target);
+    created.setFont(this.font);
+    created.setFontSize(this.fontSize);
+    if (duplicate) {
+      created.setAutoExpand(this.autoExpand);
+      created.setMode(this.mode);
+      created.htmlValue = this.htmlValue;
+      created.tags = this.tags;
+    }
+    if (duplicate && this.duplicateAudio) {
+      try {
+        const audio = await this.audioController.exportWav();
+        if (audio) await created.audioController.importAudio(audio.blob);
+      } catch { /* Text duplication remains useful if audio storage is unavailable. */ }
+    }
+    created.input.focus();
+    this.dispatchEvent(new CustomEvent(duplicate ? 'widgetduplicate' : 'widgetnew', { bubbles: true, detail: { source: this, widget: created } }));
+  }
+
+  deleteGeneratedWidget() {
+    if (!this.hasAttribute('data-itarea-generated')) return;
+    const hasContent = Boolean(this.value.trim() || this.audioBlob || this.tags.length > 1);
+    if (hasContent && !window.confirm('Delete this new text area and its unsaved content?')) return;
+    this.remove();
+  }
+
   updateModeIndicator() {
     const element = indicator(this);
-    element.textContent = this.mode === 'english'
+    const modeName = this.mode === 'english'
       ? 'No transliteration'
       : this.mode === 'roman'
         ? 'Roman'
         : pageConfig.targets[this.target].label;
+    element.textContent = '';
+    element.hidden = true;
+    const settings = this.querySelector('[data-settings]');
+    settings.title = `${modeName} — Settings`;
+    settings.setAttribute('aria-label', settings.title);
   }
 
   maybeDisableTransliterationForLine() {
     if (!disableSequenceEnabled || !disableSequence || this.mode === 'english' || this.lineRestoreMode) return;
-    const beforeCursor = this.input.value.slice(0, this.input.selectionStart);
+    const beforeCursor = this.textBeforeCaret();
     if (!beforeCursor.endsWith(disableSequence)) return;
     this.lineRestoreMode = this.mode;
     this.setMode('english', { keepLineRestoreMode: true });
   }
 
   snapshot() {
-    return { value: this.input.value, start: this.input.selectionStart, end: this.input.selectionEnd };
+    return { value: this.input.innerHTML };
   }
 
   snapshotsMatch(left, right) {
-    return left && right && left.value === right.value && left.start === right.start && left.end === right.end;
+    return left && right && left.value === right.value;
   }
 
   beginHistoryBatch() {
@@ -1152,8 +1766,8 @@ class ITranslatorTextarea extends HTMLElement {
 
   restoreSnapshot(snapshot) {
     this.flushBuffer();
-    this.input.value = snapshot.value;
-    this.input.setSelectionRange(snapshot.start, snapshot.end);
+    this.input.innerHTML = sanitizeRichHtml(snapshot.value);
+    this.placeCaretAtEnd();
     this.adjustHeight();
     this.input.dispatchEvent(new Event('input', { bubbles: true }));
   }
@@ -1194,8 +1808,9 @@ class ITranslatorTextarea extends HTMLElement {
     this.querySelectorAll('[data-mode]').forEach(button => button.classList.toggle('active', button.dataset.mode === mode));
     this.input.classList.toggle('itarea__english', mode === 'english');
     this.input.classList.toggle('itarea__roman', mode === 'roman');
-    this.input.placeholder = mode === 'english' ? 'Type English' : 'Type Sanskrit with ITRANS';
+    this.input.dataset.placeholder = mode === 'english' ? 'Type English' : 'Type Sanskrit with ITRANS';
     this.updateModeIndicator();
+    this.documentController?.markDirty();
     this.input.focus();
   }
 
@@ -1250,7 +1865,6 @@ class ITranslatorTextarea extends HTMLElement {
     if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
       event.preventDefault();
       this.beginHistoryBatch();
-      if (this.bufferStart === null) this.bufferStart = this.input.selectionStart;
       this.rawBuffer += event.key;
       this.replaceBuffer();
       if (/\s/.test(event.key)) { this.flushBuffer(); this.endHistoryBatch(); }
@@ -1262,35 +1876,82 @@ class ITranslatorTextarea extends HTMLElement {
   }
 
   handlePaste(event) {
-    if (this.mode === 'english') { this.beginHistoryBatch(); return; }
     const text = event.clipboardData?.getData('text/plain');
     if (text === undefined) return;
     event.preventDefault();
     this.beginHistoryBatch();
     this.flushBuffer();
-    const start = this.input.selectionStart;
-    this.input.setRangeText(this.transliterate(text), start, this.input.selectionEnd, 'end');
+    this.insertAtSelection(this.mode === 'english' ? text : this.transliterate(text));
     this.adjustHeight();
     this.audioController?.markTextChanged();
+    this.documentController?.markDirty();
     this.maybeDisableTransliterationForLine();
     this.endHistoryBatch();
   }
 
   replaceBuffer() {
     const rendered = this.transliterate(this.rawBuffer);
-    const end = this.input.selectionEnd;
-    this.input.setRangeText(rendered, this.bufferStart, end, 'end');
+    if (this.bufferRange && this.input.contains(this.bufferRange.commonAncestorContainer)) {
+      this.selectRange(this.bufferRange);
+      if (!rendered) {
+        this.bufferRange.deleteContents();
+        this.bufferRange.collapse(true);
+        this.selectRange(this.bufferRange);
+      } else this.insertAtSelection(rendered);
+    } else if (rendered) this.insertAtSelection(rendered);
+    this.bufferRange = this.rangeBeforeCaret(rendered.length);
     this.adjustHeight();
     this.audioController?.markTextChanged();
+    this.documentController?.markDirty();
     this.maybeDisableTransliterationForLine();
   }
 
   flushBuffer() {
     this.rawBuffer = '';
-    this.bufferStart = null;
+    this.bufferRange = null;
   }
 
-  get value() { this.flushBuffer(); return this.input.value; }
+  selectRange(range) {
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+
+  insertAtSelection(text) {
+    this.input.focus();
+    document.execCommand('insertText', false, text);
+  }
+
+  rangeBeforeCaret(length) {
+    const selection = window.getSelection();
+    if (!selection?.rangeCount) return null;
+    const caret = selection.getRangeAt(0);
+    if (!caret.collapsed || caret.startContainer.nodeType !== Node.TEXT_NODE || caret.startOffset < length) return null;
+    const range = document.createRange();
+    range.setStart(caret.startContainer, caret.startOffset - length);
+    range.setEnd(caret.startContainer, caret.startOffset);
+    return range;
+  }
+
+  textBeforeCaret() {
+    const selection = window.getSelection();
+    if (!selection?.rangeCount || !this.input.contains(selection.anchorNode)) return '';
+    const caret = selection.getRangeAt(0);
+    const range = document.createRange();
+    range.selectNodeContents(this.input);
+    range.setEnd(caret.startContainer, caret.startOffset);
+    return range.toString();
+  }
+
+  placeCaretAtEnd() {
+    this.input.focus();
+    const range = document.createRange();
+    range.selectNodeContents(this.input);
+    range.collapse(false);
+    this.selectRange(range);
+  }
+
+  get value() { this.flushBuffer(); return this.input.innerText.replaceAll('\u200b', ''); }
 
   set value(value) {
     const text = String(value ?? '');
@@ -1299,10 +1960,28 @@ class ITranslatorTextarea extends HTMLElement {
       return;
     }
     this.flushBuffer();
-    this.input.value = text;
+    this.input.textContent = text;
     this.clearHistory();
     this.adjustHeight();
     this.audioController?.markTextChanged();
+    this.documentController?.markDirty();
+  }
+
+  get htmlValue() {
+    this.flushBuffer();
+    return this.richTextController ? this.richTextController.html : sanitizeRichHtml(this.input?.innerHTML || this._initialHtml || '');
+  }
+
+  set htmlValue(value) {
+    const html = String(value || '');
+    if (!this.input) { this._initialHtml = html; return; }
+    this.flushBuffer();
+    if (this.richTextController) this.richTextController.setHtml(html);
+    else this.input.innerHTML = sanitizeRichHtml(html);
+    this.clearHistory();
+    this.adjustHeight();
+    this.audioController?.markTextChanged();
+    this.documentController?.markDirty();
   }
 
   get audioBlob() { return this.audioController?.blob || null; }
@@ -1312,4 +1991,4 @@ class ITranslatorTextarea extends HTMLElement {
 
 customElements.define('i-translator-textarea', ITranslatorTextarea);
 
-export { configureITranslator, setITranslatorTarget, setITranslatorFont, setITranslatorFontSize, createItareaArchive, readItareaArchive, ITranslatorTextarea };
+export { configureITranslator, setITranslatorTarget, setITranslatorFont, setITranslatorFontSize, createItareaArchive, readItareaArchive, sanitizeRichHtml, ITranslatorTextarea };

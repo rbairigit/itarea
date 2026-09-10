@@ -23,10 +23,46 @@ function manifest(audio = false) {
 
 test('round-trips a text-only iTranslator document', async() => {
   const input = manifest();
+  input.content.html = '<div><strong>रामः</strong> speaks <em>English</em>.</div>';
   const archive = await createItareaArchive(input);
   const result = await readItareaArchive(archive);
   assert.deepEqual(result.manifest, input);
   assert.equal(result.audio, null);
+});
+
+test('continues to accept legacy documents without formatted HTML', async() => {
+  const input = manifest();
+  const archive = await createItareaArchive(input);
+  const result = await readItareaArchive(archive);
+  assert.equal(result.manifest.content.html, undefined);
+  assert.equal(result.manifest.content.text, input.content.text);
+});
+
+test('round-trips queryable widget tags', async() => {
+  const input = manifest();
+  input.metadata = {
+    tags: [
+      { name: 'type', value: 'rich-text-audio' },
+      { name: 'lesson', value: 'greetings' },
+    ],
+  };
+  const archive = await createItareaArchive(input);
+  const result = await readItareaArchive(archive);
+  assert.deepEqual(result.manifest.metadata.tags, input.metadata.tags);
+});
+
+test('rejects tag metadata without the required immutable type tag', async() => {
+  const input = manifest();
+  input.metadata = { tags: [{ name: 'lesson', value: 'greetings' }] };
+  const archive = await createItareaArchive(input);
+  await assert.rejects(readItareaArchive(archive), /required type tag/);
+});
+
+test('rejects invalid formatted HTML metadata', async() => {
+  const input = manifest();
+  input.content.html = 42;
+  const archive = await createItareaArchive(input);
+  await assert.rejects(readItareaArchive(archive), /formatting/);
 });
 
 test('round-trips a document with audio', async() => {

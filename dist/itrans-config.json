@@ -2,8 +2,9 @@
   "version": 1,
   "defaultTarget": "sanskrit-devanagari",
   "fonts": {
-    "default": "noto-sans-devanagari",
+    "default": "itf-devanagari",
     "options": {
+      "itf-devanagari": { "label": "ITF Devanagari (installed)", "family": "ITF Devanagari", "stack": "\"ITF Devanagari\", \"ITArea Noto Sans Devanagari\", system-ui, sans-serif" },
       "noto-sans-devanagari": { "label": "Noto Sans Devanagari", "family": "ITArea Noto Sans Devanagari" },
       "noto-serif-devanagari": { "label": "Noto Serif Devanagari", "family": "ITArea Noto Serif Devanagari" },
       "tiro-devanagari-sanskrit": { "label": "Tiro Devanagari Sanskrit", "family": "ITArea Tiro Devanagari Sanskrit" },
