@@ -15,7 +15,7 @@ export default {
   },
   "targets": {
     "sanskrit-devanagari": {
-      "label": "Sanskrit (Devanagari)",
+      "label": "Sanskrit",
       "script": "Devanagari"
     },
     "sanskrit-iast": {

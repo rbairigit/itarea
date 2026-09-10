@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Local Audio Capture Test</title>
+  <style>
+    :root { font-family: system-ui, sans-serif; color: #29241c; background: #fffdf8; }
+    body { max-width: 44rem; margin: 3rem auto; padding: 0 1rem; }
+    h1 { margin-bottom: .25rem; } .lead { color: #665d52; }
+    #status { margin: 1.25rem 0; padding: .9rem 1rem; border-radius: .5rem; background: #f2eadc; white-space: pre-line; }
+    #status.ok { background: #e5f1df; color: #244e1d; } #status.error { background: #fae3df; color: #7a251d; }
+    button, a.download { display: inline-block; margin: .25rem .4rem .25rem 0; padding: .65rem .9rem; border: 0; border-radius: .45rem; color: #fff; background: #88550e; font: inherit; text-decoration: none; cursor: pointer; }
+    button.secondary { background: #665d52; } button:disabled { cursor: not-allowed; opacity: .45; }
+    audio { display: block; width: 100%; margin-top: 1rem; } .download[hidden] { display: none; }
+    code { padding: .12rem .25rem; border-radius: .2rem; background: #eee8db; }
+  </style>
+</head>
+<body>
+  <h1>Local Audio Capture Test</h1>
+  <p class="lead">Open this page directly from disk, then make a short microphone recording. The test stops automatically after 15 seconds.</p>
+  <div id="status">Checking browser capabilities…</div>
+  <button id="start" type="button">Start recording</button>
+  <button id="stop" class="secondary" type="button" disabled>Stop recording</button>
+  <audio id="preview" controls hidden></audio>
+  <a id="download" class="download" hidden>Download recording</a>
+
+  <script>
+    const status = document.querySelector('#status');
+    const start = document.querySelector('#start');
+    const stop = document.querySelector('#stop');
+    const preview = document.querySelector('#preview');
+    const download = document.querySelector('#download');
+    let recorder; let stream; let chunks = []; let timeout; let audioUrl;
+
+    const supported = 'mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices && 'MediaRecorder' in window;
+    const formats = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm'].filter(format => window.MediaRecorder?.isTypeSupported?.(format));
+    if (supported) {
+      status.textContent = `This page is running from: ${location.protocol}\nSecure context: ${window.isSecureContext ? 'yes' : 'no'}\nMediaRecorder is available. Supported recording formats: ${formats.join(', ') || 'browser default'}.\nClick Start recording to request microphone permission.`;
+      status.className = 'ok';
+    } else {
+      status.textContent = `This browser cannot use the required microphone APIs from this page.\nProtocol: ${location.protocol}\nSecure context: ${window.isSecureContext ? 'yes' : 'no'}`;
+      status.className = 'error'; start.disabled = true;
+    }
+
+    function finishRecording() {
+      clearTimeout(timeout);
+      if (recorder?.state === 'recording') recorder.stop();
+    }
+
+    start.addEventListener('click', async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mimeType = formats[0];
+        recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+        chunks = [];
+        recorder.addEventListener('dataavailable', event => { if (event.data.size) chunks.push(event.data); });
+        recorder.addEventListener('stop', () => {
+          stream.getTracks().forEach(track => track.stop());
+          const blob = new Blob(chunks, { type: recorder.mimeType });
+          if (audioUrl) URL.revokeObjectURL(audioUrl);
+          audioUrl = URL.createObjectURL(blob);
+          preview.src = audioUrl; preview.hidden = false;
+          const extension = recorder.mimeType.includes('mp4') ? 'm4a' : 'webm';
+          download.href = audioUrl; download.download = `audio-capture-test.${extension}`; download.hidden = false;
+          status.textContent = `Recording captured successfully.\nFormat: ${recorder.mimeType || blob.type}\nSize: ${(blob.size / 1024).toFixed(1)} KB\nUse the player or download link below to verify the audio.`;
+          status.className = 'ok'; start.disabled = false; stop.disabled = true;
+        });
+        recorder.start();
+        start.disabled = true; stop.disabled = false;
+        status.textContent = 'Recording… Speak now. It will stop automatically after 15 seconds.';
+        status.className = 'ok';
+        timeout = setTimeout(finishRecording, 15000);
+      } catch (error) {
+        status.textContent = `Microphone access failed: ${error.name}\n${error.message || 'The browser did not allow access.'}`;
+        status.className = 'error'; start.disabled = false; stop.disabled = true;
+      }
+    });
+    stop.addEventListener('click', finishRecording);
+  </script>
+</body>
+</html>

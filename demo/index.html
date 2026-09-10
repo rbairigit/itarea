@@ -23,10 +23,10 @@
     <p>This demo uses the same standalone widget build as the sample page. It works directly from your computer; no server or installation is needed.</p>
 
     <script src="../dist/itarea-standalone.js"></script>
-    <i-translator-textarea label="Sanskrit text"></i-translator-textarea>
+    <i-translator-textarea label="Sanskrit text" audio-id="demo-one"></i-translator-textarea>
 
     <h2>Another iTranslator Text Area</h2>
-    <i-translator-textarea label="Second Sanskrit text"></i-translator-textarea>
+    <i-translator-textarea label="Second Sanskrit text" audio-id="demo-two"></i-translator-textarea>
 
     <h2>How to use it</h2>
     <ol>
@@ -38,28 +38,36 @@
       <li>Use <strong>Ctrl+Z</strong> or <strong>Ctrl+U</strong> to undo; use <strong>Ctrl+Shift+Z</strong> or <strong>Ctrl+Shift+U</strong> to redo.</li>
       <li>In Settings, enable the global <strong>iTrans disable seq.</strong> option to use <code> = </code> (or your own three-character sequence) for English text until the end of the current line.</li>
       <li>Use the mode-tab settings to choose language, font, auto-expand, and optional page-wide settings.</li>
+      <li>Enter a font size from 14–48 in the small <strong>px</strong> field and press Enter (or leave the field) to apply it.</li>
+      <li>Use the microphone to record up to five minutes. In the waveform editor you can preview a selection, delete or silence it, insert silence, undo/redo five audio edits, reset, save, and download.</li>
+      <li>Saved audio remains in this browser for 30 days. The Play control below Copy becomes available after saving and is marked if the associated text later changes.</li>
     </ol>
 
     <h2>Use the widget in another page</h2>
     <h3>Directly from the public repository</h3>
     <p>For a page with internet access, use the pinned release below. Keep the version the same in both URLs and change it only when you intentionally upgrade.</p>
     <pre>&lt;link rel="stylesheet"
-      href="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.0.6/dist/itarea.css"&gt;
+      href="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.1.0/dist/itarea.css"&gt;
 
-&lt;script src="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.0.6/dist/itarea-standalone.js"&gt;&lt;/script&gt;
+&lt;script src="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.1.0/dist/itarea-standalone.js"&gt;&lt;/script&gt;
 
-&lt;i-translator-textarea label="Sanskrit text"&gt;&lt;/i-translator-textarea&gt;</pre>
+&lt;i-translator-textarea label="Sanskrit text" audio-id="lesson-1"&gt;&lt;/i-translator-textarea&gt;</pre>
 
     <h3>From a local folder</h3>
     <p>Copy the complete <code>dist/</code> folder, including <code>fonts/</code>, beside your page. This works from a <code>file://</code> URL.</p>
     <pre>&lt;link rel="stylesheet" href="./dist/itarea.css"&gt;
 &lt;script src="./dist/itarea-standalone.js"&gt;&lt;/script&gt;
 
-&lt;i-translator-textarea label="Sanskrit text"&gt;&lt;/i-translator-textarea&gt;</pre>
+&lt;i-translator-textarea label="Sanskrit text" audio-id="lesson-1"&gt;&lt;/i-translator-textarea&gt;</pre>
+
+    <h2>Audio recording and storage</h2>
+    <p>Assign each reusable widget a unique, stable <code>audio-id</code>. Audio saved in the editor is associated with that ID and retained in this browser's IndexedDB storage for 30 days. It is not uploaded or included in the text value.</p>
+    <p>Audio can be retrieved through <code>widget.audioBlob</code> and <code>widget.audioDurationMs</code>. The widget also emits an <code>audiochange</code> event after audio is saved or deleted. Clearing browser site data, moving a local page, changing its URL, or using another browser profile can make a saved recording unavailable.</p>
+    <div class="note"><strong>Microphone permission:</strong> recording from a local <code>file://</code> page works in tested Chrome/macOS configurations. Other browsers may require the page to run from <code>localhost</code> or HTTPS.</div>
 
     <h2>Configuration and mappings</h2>
     <p>The standalone build embeds its configuration. To change mappings, default languages, or font options, edit <a href="../config/itrans-config.json">config/itrans-config.json</a> and run <code>npm run build</code> again.</p>
-    <div class="note"><strong>Supported targets:</strong> Sanskrit (Devanagari), Telugu, Kannada, Tamil, Malayalam, and Roman (IAST). The configuration file is the complete, editable list of ITRANS aliases and script mappings.</div>
+    <div class="note"><strong>Supported targets:</strong> Sanskrit, Telugu, Kannada, Tamil, Malayalam, and Roman (IAST). Sanskrit uses Devanagari script. The configuration file is the complete, editable list of ITRANS aliases and script mappings.</div>
 
     <details>
       <summary>Useful built-in mappings</summary>

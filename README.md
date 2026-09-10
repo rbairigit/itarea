@@ -3,7 +3,7 @@
 `itarea` is a browser-native, configurable ITRANS input widget. It provides an
 ITRANS input mode (the default) and an English mode in the same text area.
 
-Current stable release: **1.0.9**.
+Current stable release: **1.1.0**.
 
 ## Quick start
 
@@ -34,11 +34,11 @@ standalone widget and stylesheet from the public repository through jsDelivr:
 
 ```html
 <link rel="stylesheet"
-      href="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.0.9/dist/itarea.css">
+      href="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.1.0/dist/itarea.css">
 
-<script src="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.0.9/dist/itarea-standalone.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.1.0/dist/itarea-standalone.js"></script>
 
-<i-translator-textarea label="Sanskrit text"></i-translator-textarea>
+<i-translator-textarea label="Sanskrit text" audio-id="lesson-1"></i-translator-textarea>
 ```
 
 The version is pinned deliberately. This keeps a page stable even when a newer
@@ -102,7 +102,7 @@ does so and can be opened directly from disk.
 
 ## Current prototype
 
-- Sanskrit (Devanagari) is the default target.
+- Sanskrit is the default target and uses Devanagari script.
 - The widget reads all mappings from `config/itrans-config.json`.
 - Custom aliases include `R` for `ऋ` and `RR` for `ॠ`, in addition to the
   standard `RRi`/`R^i` and `RRI`/`R^I` forms.
@@ -110,8 +110,18 @@ does so and can be opened directly from disk.
   and English can be mixed in a single text area.
 - Each widget keeps its own target language, font, and text size. The settings
   menu can optionally apply those changes to every widget on the page.
-- A 14–48px text-size slider beside the mode buttons provides quick adjustment;
-  its number field can also be edited directly.
+- A 14–48px number field beside the mode buttons controls text size. Type a
+  value and press Enter, or leave the field, to apply it.
+- Each widget can record up to five minutes of audio and edit it using a
+  selectable waveform. The editor supports previewing a selection, deleting or
+  silencing a selection, inserting silence, five edit undo/redo steps, reset,
+  download, and re-recording.
+- Saved audio belongs to that widget and remains in the same browser for 30
+  days. Give reusable widgets a stable `audio-id`; otherwise their page order is
+  used. Audio is not embedded in or uploaded by the widget.
+- The Play control below Copy is disabled until audio is saved. If the text is
+  changed afterward, the Play control is marked as stale so the recording can
+  be reviewed or replaced.
 - The paired unfold control below Copy restores or hides the controls above the
   text area. Widgets start in compact mode, with the top controls hidden and
   Copy still available.
@@ -141,6 +151,7 @@ complete compatibility with every historical ITRANS extension.
 
 - `config/itrans-config.json` - character maps and aliases to customize.
 - `src/itransliterator.js` - configurable transliteration engine.
+- `src/itaudio.js` - browser recorder, waveform editor, and 30-day audio storage.
 - `src/itextarea.js` - reusable `<i-translator-textarea>` web component.
 - `src/itextarea.css` - reusable widget styling.
 - `fonts/` - source font files and their licenses; only the regular styles are
@@ -162,6 +173,36 @@ complete compatibility with every historical ITRANS extension.
 
 <i-translator-textarea label="Sanskrit text"></i-translator-textarea>
 ```
+
+## Recording and retrieving audio
+
+Reveal the compact widget controls and select the microphone button. Record up
+to five minutes, then use the waveform editor to preview, select, delete,
+silence, or insert silence. Select **Save audio** to associate the result with
+that widget, and **Download** to keep a separate audio file.
+
+For reliable restoration after reloading a page, assign a unique and stable
+`audio-id`:
+
+```html
+<i-translator-textarea audio-id="verse-001"></i-translator-textarea>
+```
+
+Audio is stored in IndexedDB for 30 days, scoped to the same browser profile and
+page location. Clearing site data, moving a local page, changing its URL, using
+another browser/profile, or reaching the browser's storage limit can remove or
+separate it. The component dispatches an `audiochange` event after save or
+delete, and exposes the saved data to page code:
+
+```js
+const widget = document.querySelector('i-translator-textarea');
+widget.addEventListener('audiochange', event => console.log(event.detail));
+console.log(widget.audioBlob, widget.audioDurationMs);
+```
+
+Microphone access depends on browser permission. Local `file://` recording has
+been verified in Chrome on macOS, but other browser/security configurations may
+require the page to be served from `localhost` or HTTPS.
 
 ## Editing mappings
 
