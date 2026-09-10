@@ -1,5 +1,6 @@
 import { createTransliterator } from './itransliterator.js';
 import { audioDialogMarkup, audioIcons, createAudioController } from './itaudio.js';
+import { createDocumentController, documentIcons } from './itdocument.js';
 
 let pageConfig;
 let pageTarget;
@@ -9,7 +10,7 @@ let disableSequence = ' = ';
 const MIN_FONT_SIZE = 14;
 const MAX_FONT_SIZE = 48;
 const HISTORY_LIMIT = 100;
-const WIDGET_VERSION = '1.1.0';
+const WIDGET_VERSION = '1.2.0';
 const WIDGET_UPDATED = 'September 10, 2026';
 let pageFontSize = '22px';
 const settingsIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.43 12.98c.04-.32.07-.65.07-.98s-.02-.66-.07-.98l2.11-1.65a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.61-.22l-2.49 1a7.36 7.36 0 0 0-1.69-.98L14.5 2.42A.49.49 0 0 0 14 2h-4a.49.49 0 0 0-.49.42l-.38 2.65c-.61.25-1.18.59-1.69.98l-2.49-1a.49.49 0 0 0-.61.22l-2 3.46a.5.5 0 0 0 .12.64l2.11 1.65c-.04.32-.08.65-.08.98s.03.66.08.98l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46c.12.22.38.31.61.22l2.49-1c.51.4 1.08.73 1.69.98l.38 2.65c.04.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.18-.58 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.65ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z"/></svg>';
@@ -71,10 +72,10 @@ export class ITranslatorTextarea extends HTMLElement {
     const mappingRows = Object.entries({ ...pageConfig.tokens, ...pageConfig.aliases, ...pageConfig.punctuation })
       .sort(([left], [right]) => left.localeCompare(right))
       .map(([input, output]) => `<tr><td><code>${escapeHtml(input)}</code></td><td>${escapeHtml(output)}</td></tr>`).join('');
-    this.innerHTML = `<section class="itarea"><div class="itarea__bar"><button type="button" data-mode="itrans" class="active">iTrans</button><button type="button" data-mode="roman">Roman (IAST)</button><button type="button" data-mode="english">English</button><button type="button" class="itarea__record-button" data-audio-record title="Record or edit audio" aria-label="Record or edit audio">${audioIcons.record}</button><button type="button" class="itarea__help-button" data-help title="Widget help" aria-label="Widget help">${helpIcon}</button><label class="itarea__font-size-control">Text size <input type="number" data-font-size-value min="${MIN_FONT_SIZE}" max="${MAX_FONT_SIZE}" value="22" aria-label="Text size in pixels"><span>px</span></label></div><div class="itarea__editor"><textarea spellcheck="false" aria-label="${label}" placeholder="Type Sanskrit with ITRANS"></textarea><div class="itarea__resize-handle" data-resize-handle title="Drag to resize text area" aria-label="Drag to resize text area" role="separator"></div><span class="itarea__mode-tab"><span data-mode-indicator></span><button type="button" class="itarea__tab-settings" data-settings title="Language settings" aria-label="Language settings">${settingsIcon}</button></span><div class="itarea__actions"><button type="button" class="itarea__icon" data-copy title="Copy text" aria-label="Copy text">${copyIcon}</button><button type="button" class="itarea__icon itarea__audio-play" data-audio-play title="No recorded audio" aria-label="Play recorded audio" disabled>${audioIcons.play}</button></div><div class="itarea__settings" hidden><label>Language <select data-target-select>${targets}</select></label><label>Font <select data-font-select>${fonts}</select></label><label class="itarea__auto-expand">Auto-expand <input type="checkbox" data-auto-expand checked></label><label class="itarea__global-settings">Apply lang, font, size globally <input type="checkbox" data-apply-globally></label></div><div class="itarea__help-overlay" data-help-dialog hidden><section class="itarea__help" role="dialog" aria-modal="true" aria-label="iTranslator Text Area help"><button type="button" class="itarea__help-close" data-help-close aria-label="Close help">×</button><h2>iTranslator Text Area</h2><ul><li><strong>iTrans:</strong> type ASCII ITRANS; use Ctrl+S or Ctrl+I.</li><li><strong>Roman:</strong> creates IAST; use Ctrl+R.</li><li><strong>English:</strong> leaves text unchanged; use Ctrl+E, Ctrl+O, or Escape.</li><li>Enter a pixel value to change text size. The settings tab changes language, font, and auto-expand.</li><li>The microphone opens the recorder and waveform editor. Saved audio remains in this browser for 30 days.</li><li>Use the control below Copy and Play to hide or show the controls above the text area.</li><li>Enable <strong>Apply lang, font, size globally</strong> to synchronize those choices across widgets.</li><li>Drag the bottom edge to set a manual height; this turns off auto-expand for that widget.</li></ul><h3>Current ITRANS mappings</h3><p>These mappings come from the active widget configuration. See <a href="https://en.wikipedia.org/wiki/ITRANS" target="_blank" rel="noopener noreferrer">ITRANS on Wikipedia</a> for background and conventions.</p><table class="itarea__mapping-table"><thead><tr><th>Input</th><th>Output</th></tr></thead><tbody>${mappingRows}</tbody></table></section></div>${audioDialogMarkup()}</div></section>`;
+    this.innerHTML = `<section class="itarea"><div class="itarea__bar"><button type="button" data-mode="itrans" class="active">iTrans</button><button type="button" data-mode="roman">Roman (IAST)</button><button type="button" data-mode="english">English</button><button type="button" class="itarea__record-button" data-audio-record title="Record or edit audio" aria-label="Record or edit audio">${audioIcons.record}</button><label class="itarea__font-size-control">Text size <input type="number" data-font-size-value min="${MIN_FONT_SIZE}" max="${MAX_FONT_SIZE}" value="22" aria-label="Text size in pixels"><span>px</span></label></div><div class="itarea__editor"><textarea spellcheck="false" aria-label="${label}" placeholder="Type Sanskrit with ITRANS"></textarea><div class="itarea__resize-handle" data-resize-handle title="Drag to resize text area" aria-label="Drag to resize text area" role="separator"></div><span class="itarea__top-tabs"><button type="button" class="itarea__help-button itarea__top-help" data-help title="Widget help" aria-label="Widget help">${helpIcon}</button><span class="itarea__document-controls"><button type="button" data-document-save title="Save iTranslator document" aria-label="Save iTranslator document">${documentIcons.save}</button><button type="button" data-document-open title="Open iTranslator document" aria-label="Open iTranslator document">${documentIcons.open}</button><input type="file" data-document-file accept=".itarea.zip,application/zip" hidden><span class="itarea__document-feedback" data-document-feedback role="status" aria-live="polite" hidden></span></span><span class="itarea__mode-tab"><span data-mode-indicator></span><button type="button" class="itarea__tab-settings" data-settings title="Language settings" aria-label="Language settings">${settingsIcon}</button></span></span><div class="itarea__actions"><button type="button" class="itarea__icon" data-copy title="Copy text" aria-label="Copy text">${copyIcon}</button><button type="button" class="itarea__icon itarea__audio-play" data-audio-play title="No recorded audio" aria-label="Play recorded audio" disabled>${audioIcons.play}</button></div><div class="itarea__settings" hidden><label>Language <select data-target-select>${targets}</select></label><label>Font <select data-font-select>${fonts}</select></label><label class="itarea__auto-expand">Auto-expand <input type="checkbox" data-auto-expand checked></label><label class="itarea__global-settings">Apply lang, font, size globally <input type="checkbox" data-apply-globally></label></div><div class="itarea__help-overlay" data-help-dialog hidden><section class="itarea__help" role="dialog" aria-modal="true" aria-label="iTranslator Text Area help"><button type="button" class="itarea__help-close" data-help-close aria-label="Close help">×</button><h2>iTranslator Text Area</h2><ul><li><strong>iTrans:</strong> type ASCII ITRANS; use Ctrl+S or Ctrl+I.</li><li><strong>Roman:</strong> creates IAST; use Ctrl+R.</li><li><strong>English:</strong> leaves text unchanged; use Ctrl+E, Ctrl+O, or Escape.</li><li>Enter a pixel value to change text size. The settings tab changes language, font, and auto-expand.</li><li>The microphone opens the recorder and waveform editor. Saved audio remains in this browser for 30 days.</li><li>Save exports the text, mode, language, font, size, and saved audio to one <code>.itarea.zip</code> file. Open restores that file after warning before an overwrite.</li><li>Use the control below Copy and Play to hide or show the controls above the text area.</li><li>Enable <strong>Apply lang, font, size globally</strong> to synchronize those choices across widgets.</li><li>Drag the bottom edge to set a manual height; this turns off auto-expand for that widget.</li></ul><h3>Current ITRANS mappings</h3><p>These mappings come from the active widget configuration. See <a href="https://en.wikipedia.org/wiki/ITRANS" target="_blank" rel="noopener noreferrer">ITRANS on Wikipedia</a> for background and conventions.</p><table class="itarea__mapping-table"><thead><tr><th>Input</th><th>Output</th></tr></thead><tbody>${mappingRows}</tbody></table></section></div>${audioDialogMarkup()}</div></section>`;
     this.querySelector('.itarea__font-size-control').firstChild?.remove();
     const controlBar = this.querySelector('.itarea__bar');
-    const modeTab = this.querySelector('.itarea__mode-tab');
+    const topTabs = this.querySelector('.itarea__top-tabs');
     const settingsPanel = this.querySelector('.itarea__settings');
     settingsPanel.insertAdjacentHTML('beforeend', `<label class="itarea__disable-sequence"><input type="checkbox" data-disable-sequence-enabled> <span>iTrans disable seq.</span><input type="text" data-disable-sequence maxlength="3" size="3" value=" = " aria-label="iTrans disable sequence"></label><div class="itarea__version">iTranslator ${WIDGET_VERSION}<br>Updated ${WIDGET_UPDATED}</div>`);
     const actions = this.querySelector('.itarea__actions');
@@ -83,7 +84,7 @@ export class ITranslatorTextarea extends HTMLElement {
     const controlsToggle = this.querySelector('[data-controls-toggle]');
     const setControlsVisible = visible => {
       controlBar.hidden = !visible;
-      modeTab.hidden = !visible;
+      topTabs.hidden = !visible;
       settingsPanel.hidden = true;
       controlsToggle.innerHTML = visible ? collapseControlsIcon : expandControlsIcon;
       controlsToggle.title = visible ? 'Hide controls' : 'Show controls';
@@ -123,6 +124,7 @@ export class ITranslatorTextarea extends HTMLElement {
     this.applyFontSize();
     this.setMode('itrans');
     this.audioController = createAudioController(this);
+    this.documentController = createDocumentController(this, WIDGET_VERSION);
     controlBar.addEventListener('click', event => {
       const button = event.target.closest('button');
       if (button?.dataset.mode) this.setMode(button.dataset.mode);
@@ -236,6 +238,7 @@ export class ITranslatorTextarea extends HTMLElement {
     document.removeEventListener('keydown', this.closeHelpOnEscape, true);
     this.actionResizeObserver?.disconnect();
     this.audioController?.destroy();
+    this.documentController?.destroy();
     clearTimeout(this.copyFeedbackTimer);
     clearTimeout(this.historyTimer);
   }
@@ -253,6 +256,8 @@ export class ITranslatorTextarea extends HTMLElement {
     this.querySelector('[data-target-select]').value = target;
     this.updateModeIndicator();
   }
+
+  supportsTarget(target) { return Boolean(pageConfig.targets[target]); }
 
   setFont(font) {
     if (!pageConfig.fonts?.options?.[font]) throw new Error(`Unsupported font: ${font}`);

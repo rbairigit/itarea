@@ -6,17 +6,18 @@
 @font-face { font-family: "ITArea Chandas"; src: url("../fonts/Chandas_Font.ttf") format("truetype"); font-display: swap; }
 .itarea { position: relative; margin: 1rem 0; color: #29241c; font: 16px/1.5 system-ui, sans-serif; }
 .itarea label { font-weight: 400; }
-.itarea__bar { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin: .65rem 0 0 4px; }
-.itarea__bar[hidden], .itarea__mode-tab[hidden] { display: none !important; }
-.itarea__font-size-control { display: flex; align-items: center; gap: .25rem; margin-left: .25rem; font-size: .875rem; white-space: nowrap; }
-.itarea__font-size-control input[type="number"] { box-sizing: content-box; width: 2ch; padding: .2rem; border: 1px solid #bcae98; border-radius: .3rem; font: inherit; appearance: textfield; }
+.itarea__bar { display: flex; flex-wrap: wrap; align-items: stretch; gap: .4rem; min-height: 36px; margin: .65rem 0 0 4px; }
+.itarea__bar[hidden], .itarea__top-tabs[hidden] { display: none !important; }
+.itarea__font-size-control { display: flex; box-sizing: border-box; align-items: center; gap: .25rem; height: 36px; margin-left: .25rem; font-size: 16px; line-height: 1.5; white-space: nowrap; }
+.itarea__font-size-control input[type="number"] { box-sizing: border-box; width: 2.8ch; height: 36px; padding: .2rem; border: 1px solid #bcae98; border-bottom: 0; border-radius: .4rem .4rem 0 0; font: inherit; appearance: textfield; }
 .itarea__font-size-control input[type="number"]::-webkit-inner-spin-button, .itarea__font-size-control input[type="number"]::-webkit-outer-spin-button { margin: 0; appearance: none; }
 .itarea button { border: 1px solid #bcae98; border-radius: .4rem; padding: .35rem .7rem; background: #fff; color: inherit; font: inherit; cursor: pointer; }
+.itarea__bar > button { box-sizing: border-box; height: 36px; border-bottom: 0; border-radius: .4rem .4rem 0 0; }
 .itarea button.active { background: #774b0a; color: #fff; }
-.itarea button.itarea__help-button { display: grid; place-items: center; box-sizing: border-box; width: 38px; height: 38px; padding: 0; color: #774b0a; }
+.itarea button.itarea__help-button { display: grid; place-items: center; box-sizing: border-box; width: 36px; height: 36px; padding: 0; border-bottom: 0; color: #774b0a; }
 .itarea button.itarea__help-button svg { display: block; width: 23px; height: 23px; fill: currentColor; }
 .itarea button.itarea__help-button:hover, .itarea button.itarea__help-button:focus-visible { background: #f4eddd; color: #5d3907; outline: 0; }
-.itarea button.itarea__record-button { display: grid; place-items: center; box-sizing: border-box; width: 38px; height: 38px; padding: 0; color: #774b0a; }
+.itarea button.itarea__record-button { display: grid; place-items: center; box-sizing: border-box; width: 36px; height: 36px; padding: 0; border-bottom: 0; color: #774b0a; }
 .itarea button.itarea__record-button svg { display: block; width: 22px; height: 22px; fill: currentColor; }
 .itarea button.itarea__record-button:hover, .itarea button.itarea__record-button:focus-visible { background: #f4eddd; color: #5d3907; outline: 0; }
 .itarea__editor { position: relative; margin-top: 0; }
@@ -25,10 +26,10 @@
 .itarea textarea.itarea__english { background: #e5e5e5; }
 .itarea textarea.itarea__roman { background: #e1f3df; }
 .itarea__actions { position: absolute; top: .55rem; right: .55rem; z-index: 2; display: flex; flex-direction: column; gap: .15rem; }
-.itarea button.itarea__icon { display: grid; place-items: center; box-sizing: border-box; flex: 0 0 32px; width: 32px; height: 32px; padding: 0; border: 0; border-radius: .4rem; background: transparent; color: #8a8a8a; line-height: 1; transition: background .15s, color .15s; }
+.itarea button.itarea__icon { display: grid; place-items: center; box-sizing: border-box; flex: 0 0 32px; width: 32px; height: 32px; padding: 0; border: 0; border-radius: .4rem; background: transparent; color: #774b0a; line-height: 1; transition: background .15s, color .15s; }
 .itarea button.itarea__icon[hidden] { display: none !important; }
 .itarea button.itarea__icon svg { display: block; width: 20px; height: 20px; fill: currentColor; }
-.itarea button.itarea__icon:hover, .itarea button.itarea__icon:focus-visible { background: #e8e8e8; color: #4d4d4d; outline: 0; }
+.itarea button.itarea__icon:hover, .itarea button.itarea__icon:focus-visible { background: #f4eddd; color: #5d3907; outline: 0; }
 .itarea button.itarea__icon.is-copied { color: #24733b; }
 .itarea__copy-feedback { position: absolute; top: 2px; right: 38px; padding: .18rem .45rem; border-radius: .3rem; background: #29241c; color: #fff; font-size: .75rem; line-height: 1.4; white-space: nowrap; box-shadow: 0 2px 7px #0003; }
 .itarea__copy-feedback[hidden] { display: none; }
@@ -60,7 +61,17 @@
 .itarea__help li + li { margin-top: .55rem; }
 .itarea button.itarea__help-close { position: absolute; top: .55rem; right: .55rem; width: 2rem; height: 2rem; padding: 0; border: 0; border-radius: .35rem; background: transparent; font-size: 1.5rem; line-height: 1; }
 .itarea button.itarea__help-close:hover, .itarea button.itarea__help-close:focus-visible { background: #e8e8e8; outline: 0; }
-.itarea__mode-tab { position: absolute; top: -36px; right: .55rem; z-index: 1; display: flex; box-sizing: border-box; align-items: center; gap: .3rem; height: 36px; padding: 0 4px 0 10px; border: 1px solid #bcae98; border-bottom: 0; border-radius: .4rem .4rem 0 0; background: #fff; color: inherit; font: 400 16px/1.5 system-ui, sans-serif; }
+.itarea__top-tabs { position: absolute; top: -36px; right: .55rem; z-index: 1; display: flex; align-items: flex-end; height: 36px; }
+.itarea button.itarea__top-help { margin-right: .3rem; border-radius: .4rem .4rem 0 0; }
+.itarea__mode-tab { display: flex; box-sizing: border-box; align-items: center; gap: .3rem; height: 36px; padding: 0 4px 0 10px; border: 1px solid #bcae98; border-bottom: 0; border-radius: .4rem .4rem 0 0; background: #fff; color: inherit; font: 400 16px/1.5 system-ui, sans-serif; }
+.itarea__document-controls { position: relative; display: flex; align-items: center; gap: 1px; height: 36px; margin-right: .3rem; }
+.itarea button[data-document-save], .itarea button[data-document-open] { display: grid; place-items: center; box-sizing: border-box; width: 34px; height: 36px; padding: 0; border-bottom: 0; border-radius: .4rem .4rem 0 0; color: #774b0a; }
+.itarea button[data-document-save] svg, .itarea button[data-document-open] svg { display: block; width: 20px; height: 20px; fill: currentColor; }
+.itarea button[data-document-save]:hover, .itarea button[data-document-save]:focus-visible, .itarea button[data-document-open]:hover, .itarea button[data-document-open]:focus-visible { background: #f4eddd; color: #5d3907; outline: 0; }
+.itarea button[data-document-save]:disabled, .itarea button[data-document-open]:disabled { cursor: wait; opacity: .45; }
+.itarea__document-feedback { position: absolute; right: 0; bottom: 42px; padding: .18rem .45rem; border-radius: .3rem; background: #29241c; color: #fff; font-size: .75rem; line-height: 1.4; white-space: nowrap; box-shadow: 0 2px 7px #0003; }
+.itarea__document-feedback[hidden] { display: none; }
+.itarea__document-feedback.error { background: #8a1f18; }
 .itarea button.itarea__tab-settings { display: grid; place-items: center; width: 28px; height: 28px; margin: 0; padding: 0; border: 0; border-radius: .3rem; background: transparent; color: #774b0a; cursor: pointer; }
 .itarea button.itarea__tab-settings svg { display: block; width: 20px; height: 20px; fill: currentColor; }
 .itarea button.itarea__tab-settings:hover, .itarea button.itarea__tab-settings:focus-visible { background: #e8e8e8; color: #5d3907; outline: 0; }

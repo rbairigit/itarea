@@ -3,7 +3,7 @@
 `itarea` is a browser-native, configurable ITRANS input widget. It provides an
 ITRANS input mode (the default) and an English mode in the same text area.
 
-Current stable release: **1.1.0**.
+Current stable release: **1.2.0**.
 
 ## Quick start
 
@@ -34,9 +34,9 @@ standalone widget and stylesheet from the public repository through jsDelivr:
 
 ```html
 <link rel="stylesheet"
-      href="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.1.0/dist/itarea.css">
+      href="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.2.0/dist/itarea.css">
 
-<script src="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.1.0/dist/itarea-standalone.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.2.0/dist/itarea-standalone.js"></script>
 
 <i-translator-textarea label="Sanskrit text" audio-id="lesson-1"></i-translator-textarea>
 ```
@@ -122,6 +122,9 @@ does so and can be opened directly from disk.
 - The Play control below Copy is disabled until audio is saved. If the text is
   changed afterward, the Play control is marked as stale so the recording can
   be reviewed or replaced.
+- The Save and Open controls store one widget as a portable `.itarea.zip`
+  document. It includes the Unicode text, mode, language, font, font size, and
+  saved audio when present. Opening warns before replacing nonempty content.
 - The paired unfold control below Copy restores or hides the controls above the
   text area. Widgets start in compact mode, with the top controls hidden and
   Copy still available.
@@ -152,6 +155,8 @@ complete compatibility with every historical ITRANS extension.
 - `config/itrans-config.json` - character maps and aliases to customize.
 - `src/itransliterator.js` - configurable transliteration engine.
 - `src/itaudio.js` - browser recorder, waveform editor, and 30-day audio storage.
+- `src/itdocument.js` - portable `.itarea.zip` creation, validation, save, and
+  restore support.
 - `src/itextarea.js` - reusable `<i-translator-textarea>` web component.
 - `src/itextarea.css` - reusable widget styling.
 - `fonts/` - source font files and their licenses; only the regular styles are
@@ -203,6 +208,34 @@ console.log(widget.audioBlob, widget.audioDurationMs);
 Microphone access depends on browser permission. Local `file://` recording has
 been verified in Chrome on macOS, but other browser/security configurations may
 require the page to be served from `localhost` or HTTPS.
+
+## Saving and opening portable documents
+
+Reveal the widget controls, then use **Save** to create a single file whose name
+ends in `.itarea.zip`. The archive contains:
+
+- `manifest.json` with the Unicode text, selected language and mode, font, font
+  size, widget version, and audio metadata.
+- `audio.wav` when audio has been saved in the widget's recorder.
+
+Chrome and other browsers that support the native save picker let you choose a
+filename and folder directly. Other configurations use the browser's normal
+download flow. **Open** accepts an `.itarea.zip` document, validates it, and
+warns before overwriting existing widget text or audio. If a saved font is not
+available in the current package, the System default font is used and a warning
+is shown.
+
+The archive is self-contained and uses a versioned manifest. Keep the original
+archive as created by the widget; recompressing its contents with another ZIP
+tool is not supported by this first implementation.
+
+Host pages can observe successful saves and opens:
+
+```js
+const widget = document.querySelector('i-translator-textarea');
+widget.addEventListener('documentsave', event => console.log(event.detail));
+widget.addEventListener('documentopen', event => console.log(event.detail));
+```
 
 ## Editing mappings
 

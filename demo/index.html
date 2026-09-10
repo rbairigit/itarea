@@ -41,15 +41,16 @@
       <li>Enter a font size from 14–48 in the small <strong>px</strong> field and press Enter (or leave the field) to apply it.</li>
       <li>Use the microphone to record up to five minutes. In the waveform editor you can preview a selection, delete or silence it, insert silence, undo/redo five audio edits, reset, save, and download.</li>
       <li>Saved audio remains in this browser for 30 days. The Play control below Copy becomes available after saving and is marked if the associated text later changes.</li>
+      <li>Use Save to export this widget's text, language, mode, font, size, and saved audio as one <code>.itarea.zip</code> file. Use Open to restore it; the widget warns before replacing existing content.</li>
     </ol>
 
     <h2>Use the widget in another page</h2>
     <h3>Directly from the public repository</h3>
     <p>For a page with internet access, use the pinned release below. Keep the version the same in both URLs and change it only when you intentionally upgrade.</p>
     <pre>&lt;link rel="stylesheet"
-      href="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.1.0/dist/itarea.css"&gt;
+      href="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.2.0/dist/itarea.css"&gt;
 
-&lt;script src="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.1.0/dist/itarea-standalone.js"&gt;&lt;/script&gt;
+&lt;script src="https://cdn.jsdelivr.net/gh/rbairigit/itarea@v1.2.0/dist/itarea-standalone.js"&gt;&lt;/script&gt;
 
 &lt;i-translator-textarea label="Sanskrit text" audio-id="lesson-1"&gt;&lt;/i-translator-textarea&gt;</pre>
 
@@ -64,6 +65,11 @@
     <p>Assign each reusable widget a unique, stable <code>audio-id</code>. Audio saved in the editor is associated with that ID and retained in this browser's IndexedDB storage for 30 days. It is not uploaded or included in the text value.</p>
     <p>Audio can be retrieved through <code>widget.audioBlob</code> and <code>widget.audioDurationMs</code>. The widget also emits an <code>audiochange</code> event after audio is saved or deleted. Clearing browser site data, moving a local page, changing its URL, or using another browser profile can make a saved recording unavailable.</p>
     <div class="note"><strong>Microphone permission:</strong> recording from a local <code>file://</code> page works in tested Chrome/macOS configurations. Other browsers may require the page to run from <code>localhost</code> or HTTPS.</div>
+
+    <h2>Portable save and open files</h2>
+    <p>Reveal the compact controls and use <strong>Save</strong> to create a portable <code>.itarea.zip</code> document. It stores the Unicode text, current mode, selected language, font, font size, and any audio saved in the recorder. The file contains a versioned <code>manifest.json</code> plus an optional normalized <code>audio.wav</code>.</p>
+    <p>Use <strong>Open</strong> to restore the document into any iTranslator Text Area. The archive is validated first, and a confirmation appears before nonempty text or recorded audio is overwritten. If its font is unavailable in the receiving package, the widget uses the System default font and reports that substitution.</p>
+    <div class="note"><strong>Keep the original file:</strong> this first implementation uses an uncompressed ZIP container so the standalone widget needs no ZIP library. Do not unpack and recompress the archive before reopening it in the widget.</div>
 
     <h2>Configuration and mappings</h2>
     <p>The standalone build embeds its configuration. To change mappings, default languages, or font options, edit <a href="../config/itrans-config.json">config/itrans-config.json</a> and run <code>npm run build</code> again.</p>

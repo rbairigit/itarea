@@ -2,6 +2,16 @@
 
 All notable changes to iTranslator Text Area are documented here.
 
+## 1.2.0 — 2026-09-10
+
+- Added per-widget Save and Open controls for portable `.itarea.zip` documents.
+- Added a versioned manifest containing Unicode text, language, mode, font, and
+  font size, with optional normalized WAV audio in the same archive.
+- Added validation, overwrite confirmation, unavailable-font fallback, native
+  save-picker support, download fallback, and save/open events.
+- Included document support in both distribution builds and added archive
+  round-trip and integrity tests.
+
 ## 1.1.0 — 2026-09-10
 
 - Added per-widget microphone recording with a five-minute limit.

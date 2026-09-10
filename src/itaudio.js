@@ -240,7 +240,7 @@ export function createAudioController(widget) {
     redoStack = []; workingBuffer = buffer; workingBlob = encodeWav(buffer); edited = true; selection = null;
     cursorSeconds = Math.min(cursorSeconds, buffer.duration); setWorkingUrl(workingBlob); updateEditor(); setStatus('Edit applied. Preview the result before saving.');
   };
-  const save = async() => {
+  const save = async({ closeDialog = false } = {}) => {
     if (!workingBlob) return;
     const record = { key: storageKey, blob: workingBlob, mimeType: workingBlob.type, durationMs: Math.round((workingBuffer?.duration || 0) * 1000), text: textNow(), createdAt: Date.now(), expiresAt: Date.now() + AUDIO_RETENTION_MS };
     try { await saveAudioRecord(record); setStatus('Audio saved in this browser for 30 days.'); }
@@ -248,6 +248,10 @@ export function createAudioController(widget) {
     savedBlob = record.blob; savedDurationMs = record.durationMs; savedText = record.text;
     revoke(savedUrl); savedUrl = URL.createObjectURL(savedBlob); updateOutside();
     widget.dispatchEvent(new CustomEvent('audiochange', { bubbles: true, detail: { blob: savedBlob, durationMs: savedDurationMs, expiresAt: record.expiresAt } }));
+    if (closeDialog) {
+      dialog.hidden = true;
+      widget.input?.focus();
+    }
   };
   const removeSaved = async() => {
     try { await deleteAudioRecord(storageKey); } catch { /* Session state is still cleared. */ }
@@ -255,6 +259,15 @@ export function createAudioController(widget) {
     outsideAudio.pause(); outsideAudio.removeAttribute('src'); outsidePlay.innerHTML = audioIcons.play;
     widget.dispatchEvent(new CustomEvent('audiochange', { bubbles: true, detail: { blob: null, durationMs: 0 } }));
     setStatus('Saved audio deleted.');
+  };
+  const clearWorking = () => {
+    player.pause();
+    workingBlob = null; workingBuffer = null; originalBuffer = null;
+    selection = null; cursorSeconds = 0; selectionEnd = null;
+    undoStack = []; redoStack = []; edited = false;
+    revoke(workingUrl); workingUrl = null;
+    player.removeAttribute('src'); download.removeAttribute('href');
+    editor.hidden = true; updateEditor();
   };
   const stopLiveWaveform = () => {
     if (liveFrame) cancelAnimationFrame(liveFrame); liveFrame = null;
@@ -360,18 +373,35 @@ export function createAudioController(widget) {
   widget.querySelector('[data-audio-undo]').addEventListener('click', () => { if (!undoStack.length) return; redoStack.push(workingBuffer); workingBuffer = undoStack.pop(); workingBlob = encodeWav(workingBuffer); edited = true; selection = null; setWorkingUrl(workingBlob); updateEditor(); setStatus('The last edit was undone.'); });
   widget.querySelector('[data-audio-redo]').addEventListener('click', () => { if (!redoStack.length) return; undoStack.push(workingBuffer); workingBuffer = redoStack.pop(); workingBlob = encodeWav(workingBuffer); edited = true; selection = null; setWorkingUrl(workingBlob); updateEditor(); setStatus('The edit was restored.'); });
   widget.querySelector('[data-audio-reset]').addEventListener('click', () => { if (!originalBuffer) return; undoStack.push(workingBuffer); workingBuffer = originalBuffer; workingBlob = encodeWav(workingBuffer); redoStack = []; edited = false; selection = null; setWorkingUrl(workingBlob); updateEditor(); setStatus('All edits were reset.'); });
-  saveButton.addEventListener('click', save); deleteSavedButton.addEventListener('click', removeSaved);
+  saveButton.addEventListener('click', () => save({ closeDialog: true })); deleteSavedButton.addEventListener('click', removeSaved);
   const redraw = () => drawWaveform(waveform, workingBuffer, selection, cursorSeconds);
   window.addEventListener('resize', redraw);
 
-  const controller = {
-    get blob() { return savedBlob; }, get durationMs() { return savedDurationMs; },
-    open, stopRecording: finishRecording, markTextChanged: updateOutside,
-    destroy() { destroyed = true; document.removeEventListener('keydown', escape, true); window.removeEventListener('resize', redraw); finishRecording(); stream?.getTracks().forEach(track => track.stop()); stopLiveWaveform(); player.pause(); outsideAudio.pause(); outsideAudio.removeAttribute('src'); revoke(savedUrl); revoke(workingUrl); audioContext?.close().catch(() => {}); if (activeController === controller) activeController = null; },
-  };
   updateOutside();
-  loadAudioRecord(storageKey).then(record => {
+  const ready = loadAudioRecord(storageKey).then(record => {
     if (!record || destroyed) return; savedBlob = record.blob; savedDurationMs = record.durationMs; savedText = record.text || ''; savedUrl = URL.createObjectURL(savedBlob); updateOutside();
   }).catch(() => {});
+
+  const controller = {
+    get blob() { return savedBlob; }, get durationMs() { return savedDurationMs; },
+    ready, open, stopRecording: finishRecording, markTextChanged: updateOutside,
+    async exportWav() {
+      await ready;
+      if (!savedBlob) return null;
+      const buffer = await decode(savedBlob);
+      return { blob: encodeWav(buffer), durationMs: Math.round(buffer.duration * 1000) };
+    },
+    async importAudio(blob) {
+      await ready;
+      await loadWorking(blob);
+      await save();
+    },
+    async clearAudio() {
+      await ready;
+      await removeSaved();
+      clearWorking();
+    },
+    destroy() { destroyed = true; document.removeEventListener('keydown', escape, true); window.removeEventListener('resize', redraw); finishRecording(); stream?.getTracks().forEach(track => track.stop()); stopLiveWaveform(); player.pause(); outsideAudio.pause(); outsideAudio.removeAttribute('src'); revoke(savedUrl); revoke(workingUrl); audioContext?.close().catch(() => {}); if (activeController === controller) activeController = null; },
+  };
   return controller;
 }
