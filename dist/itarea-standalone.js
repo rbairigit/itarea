@@ -42,7 +42,7 @@ function createTransliterator(config, target = config.defaultTarget) {
     return (input) => [...devanagari(input)].map(char => {
       if (targetConfig.replacements?.[char]) return targetConfig.replacements[char];
       const code = char.codePointAt(0);
-      return code >= 0x0900 && code <= 0x097f && code !== 0x0964 && code !== 0x0965
+      return code >= 0x0900 && code <= 0x097f && ![0x0951, 0x0952, 0x0964, 0x0965].includes(code)
         ? String.fromCodePoint(code + targetConfig.offset) : char;
     }).join('');
   }
@@ -875,11 +875,18 @@ const icons = {
 
 const escapeAttribute = value => String(value).replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 
+function fontCssValue(font) {
+  if (font.stack) return font.stack;
+  const family = String(font.family || '').trim();
+  if (!family || !/\s/.test(family)) return family;
+  return `"${family.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`;
+}
+
 function richTextToolbarMarkup(fontOptions = {}, defaultFont = '') {
   const colors = COLOR_PRESETS.map(value => `<button type="button" class="itarea__color-preset" data-format-color="${value}" style="--swatch:${value}" title="${value}" aria-label="Text color ${value}"></button>`).join('');
   const sizes = SIZE_OPTIONS.map(value => `<option value="${value}px"${value === 24 ? ' selected' : ''}>${value}</option>`).join('');
   const weights = WEIGHT_OPTIONS.map(([label, value]) => `<option value="${value}"${value === '600' ? ' selected' : ''}>${label}</option>`).join('');
-  const fonts = Object.entries(fontOptions).map(([id, font]) => `<option value="${escapeAttribute(font.stack || font.family)}"${id === defaultFont ? ' selected' : ''}>${escapeAttribute(font.label)}</option>`).join('');
+  const fonts = Object.entries(fontOptions).map(([id, font]) => `<option value="${escapeAttribute(fontCssValue(font))}"${id === defaultFont ? ' selected' : ''}>${escapeAttribute(font.label)}</option>`).join('');
   return `<div class="itarea__format-bar" role="toolbar" aria-label="Text formatting">
     <button type="button" data-format-command="bold" title="Bold" aria-label="Bold"><strong>B</strong></button>
     <button type="button" data-format-command="italic" title="Italic" aria-label="Italic"><em>I</em></button>
@@ -960,35 +967,6 @@ function rangeOverlapsTextNode(range, node) {
   }
 }
 
-function textOffsetsForRange(editor, range) {
-  const before = document.createRange();
-  before.selectNodeContents(editor);
-  before.setEnd(range.startContainer, range.startOffset);
-  return { start: before.toString().length, end: before.toString().length + range.toString().length };
-}
-
-function restoreRangeFromTextOffsets(editor, offsets) {
-  const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
-  let position = 0;
-  let start = null;
-  let end = null;
-  let node;
-  while ((node = walker.nextNode())) {
-    const next = position + node.length;
-    if (!start && offsets.start <= next) start = { node, offset: Math.max(0, offsets.start - position) };
-    if (!end && offsets.end <= next) { end = { node, offset: Math.max(0, offsets.end - position) }; break; }
-    position = next;
-  }
-  if (!start || !end) return null;
-  const range = document.createRange();
-  range.setStart(start.node, Math.min(start.offset, start.node.length));
-  range.setEnd(end.node, Math.min(end.offset, end.node.length));
-  const selection = window.getSelection();
-  selection.removeAllRanges();
-  selection.addRange(range);
-  return range;
-}
-
 function createRichTextController(widget) {
   const editor = widget.input;
   const toolbar = widget.querySelector('.itarea__format-bar');
@@ -1038,7 +1016,10 @@ function createRichTextController(widget) {
 
   const remember = () => {
     const range = selectionInside(editor);
-    if (range) { savedRange = range.cloneRange(); updateStates(); }
+    if (range) {
+      savedRange = range.cloneRange();
+      updateStates();
+    }
     return savedRange;
   };
   const restore = () => {
@@ -1074,26 +1055,43 @@ function createRichTextController(widget) {
       range.setStart(text, 1); range.collapse(true);
       selection.removeAllRanges(); selection.addRange(range); savedRange = range.cloneRange();
     } else {
-      const offsets = textOffsetsForRange(editor, range);
+      const startMarker = document.createElement('span');
+      const endMarker = document.createElement('span');
+      startMarker.hidden = true;
+      endMarker.hidden = true;
+      const startBoundary = range.cloneRange();
+      const endBoundary = range.cloneRange();
+      endBoundary.collapse(false);
+      endBoundary.insertNode(endMarker);
+      startBoundary.collapse(true);
+      startBoundary.insertNode(startMarker);
+      const markedRange = document.createRange();
+      markedRange.setStartAfter(startMarker);
+      markedRange.setEndBefore(endMarker);
       const textNodes = [];
       const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
-      let node;
-      while ((node = walker.nextNode())) {
-        if (!rangeOverlapsTextNode(range, node)) continue;
-        const start = node === range.startContainer ? range.startOffset : 0;
-        const end = node === range.endContainer ? range.endOffset : node.length;
-        if (end > start) textNodes.push({ node, start, end });
+      let textNode;
+      while ((textNode = walker.nextNode())) {
+        if (rangeOverlapsTextNode(markedRange, textNode)) textNodes.push(textNode);
       }
-      textNodes.reverse().forEach(({ node: textNode, start, end }) => {
-        if (end < textNode.length) textNode.splitText(end);
-        const selectedNode = start > 0 ? textNode.splitText(start) : textNode;
+      const styledNodes = [];
+      textNodes.reverse().forEach(selectedNode => {
         const span = document.createElement('span');
         span.style.setProperty(property, value);
         selectedNode.replaceWith(span);
         span.append(selectedNode);
+        styledNodes.unshift(selectedNode);
       });
-      editor.normalize();
-      savedRange = restoreRangeFromTextOffsets(editor, offsets) || savedRange;
+      startMarker.remove();
+      endMarker.remove();
+      if (styledNodes.length) {
+        const restoredRange = document.createRange();
+        restoredRange.setStart(styledNodes[0], 0);
+        restoredRange.setEnd(styledNodes.at(-1), styledNodes.at(-1).length);
+        selection.removeAllRanges();
+        selection.addRange(restoredRange);
+        savedRange = restoredRange.cloneRange();
+      }
     }
     changed();
   };
@@ -1118,7 +1116,13 @@ function createRichTextController(widget) {
   });
   fontSelect.addEventListener('pointerdown', remember);
   toolbar.querySelectorAll('[data-format-command]').forEach(button => button.addEventListener('click', () => command(button.dataset.formatCommand)));
-  fontSelect.addEventListener('change', event => { if (event.target.value) applyStyle('font-family', event.target.value); });
+  fontSelect.addEventListener('change', event => {
+    const value = event.target.value;
+    if (value) {
+      applyStyle('font-family', value);
+      fontSelect.value = value;
+    }
+  });
   sizeSelect.addEventListener('change', event => { if (event.target.value) applyStyle('font-size', event.target.value); });
   weightSelect.addEventListener('change', event => { if (event.target.value) applyStyle('font-weight', event.target.value); });
   colorToggle.addEventListener('click', () => { palette.hidden = !palette.hidden; colorToggle.setAttribute('aria-expanded', String(!palette.hidden)); });
@@ -2284,6 +2288,7 @@ configureITranslator({
     "y": "य", "r": "र", "l": "ल", "v": "व", "w": "व",
     "sh": "श", "Sh": "ष", "S": "ष", "s": "स", "h": "ह", "L": "ळ",
     "M": "ं", ".m": "ं", ".n": "ं", "H": "ः", ".N": "ँ", ".h": "्", ".a": "ऽ", "OM": "ॐ", "AUM": "ॐ",
+    "U+0951": "॑", "''": "॑", "U+0952": "॒", "_": "॒", "U+1CDA": "᳚", "'''": "᳚",
     "0": "०", "1": "१", "2": "२", "3": "३", "4": "४", "5": "५", "6": "६", "7": "७", "8": "८", "9": "९",
     "kSh": "क्ष", "kS": "क्ष", "kSh": "क्ष", "GYa": "ज्ञ", "j~n": "ज्ञ"
   },

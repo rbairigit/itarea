@@ -41,7 +41,7 @@ export function createTransliterator(config, target = config.defaultTarget) {
     return (input) => [...devanagari(input)].map(char => {
       if (targetConfig.replacements?.[char]) return targetConfig.replacements[char];
       const code = char.codePointAt(0);
-      return code >= 0x0900 && code <= 0x097f && code !== 0x0964 && code !== 0x0965
+      return code >= 0x0900 && code <= 0x097f && ![0x0951, 0x0952, 0x0964, 0x0965].includes(code)
         ? String.fromCodePoint(code + targetConfig.offset) : char;
     }).join('');
   }

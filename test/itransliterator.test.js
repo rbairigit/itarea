@@ -67,6 +67,13 @@ test('renders avagraha and chandrabindu shortcuts', () => {
   assert.equal(transliterate('.a k.N'), 'ऽ कँ');
   assert.equal(createTransliterator(config, 'telugu')('.a k.N'), 'ఽ కఁ');
 });
+test('renders Vedic accent aliases after the preceding vowel', () => {
+  assert.equal(transliterate("a'' i_ u'''"), 'अ॑ इ॒ उ᳚');
+  assert.equal(transliterate('aU+0951 iU+0952 uU+1CDA'), 'अ॑ इ॒ उ᳚');
+  assert.equal(transliterate("te'' draa_ patnii'''"), 'ते॑ द्रा॒ पत्नी᳚');
+  assert.equal(createTransliterator(config, 'telugu')("a'' i_ u'''"), 'అ॑ ఇ॒ ఉ᳚');
+  assert.equal(romanize("a'' i_ u'''"), "a'' i_ u'''");
+});
 test('renders digits in the selected script', () => {
   assert.equal(transliterate('0123456789'), '०१२३४५६७८९');
   assert.equal(createTransliterator(config, 'telugu')('0123456789'), '౦౧౨౩౪౫౬౭౮౯');
