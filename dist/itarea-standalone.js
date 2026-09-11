@@ -2221,7 +2221,7 @@ configureITranslator({
   "version": 1,
   "defaultTarget": "sanskrit-devanagari",
   "fonts": {
-    "default": "itf-devanagari",
+    "default": "sanskrit-2020",
     "options": {
       "itf-devanagari": { "label": "ITF Devanagari (installed)", "family": "ITF Devanagari", "stack": "\"ITF Devanagari\", \"ITArea Noto Sans Devanagari\", system-ui, sans-serif" },
       "noto-sans-devanagari": { "label": "Noto Sans Devanagari", "family": "ITArea Noto Sans Devanagari" },
