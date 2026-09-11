@@ -1388,6 +1388,7 @@ class ITranslatorTextarea extends HTMLElement {
     this.mode = 'itrans';
     this.rawBuffer = '';
     this.bufferRange = null;
+    this.isComposing = false;
     this.autoExpand = true;
     this._contentLastUpdatedAt = null;
     this._audioLastUpdatedAt = null;
@@ -1584,6 +1585,8 @@ class ITranslatorTextarea extends HTMLElement {
       }, 1800);
     });
     this.input.addEventListener('keydown', event => this.handleKeydown(event));
+    this.input.addEventListener('compositionstart', () => { this.flushBuffer(); this.isComposing = true; });
+    this.input.addEventListener('compositionend', () => { this.isComposing = false; });
     this.input.addEventListener('input', () => {
       this._contentLastUpdatedAt = new Date().toISOString();
       this.adjustHeight();
@@ -1594,6 +1597,10 @@ class ITranslatorTextarea extends HTMLElement {
     this.input.addEventListener('paste', event => this.handlePaste(event));
     this.input.addEventListener('blur', () => this.flushBuffer());
     this.input.addEventListener('pointerdown', () => this.flushBuffer());
+    this.handleSelectionChange = () => {
+      if (this.rawBuffer && document.activeElement === this.input && !this.bufferMatchesCaret()) this.flushBuffer();
+    };
+    document.addEventListener('selectionchange', this.handleSelectionChange);
     this.adjustHeight();
     this.updateActionVisibility();
   }
@@ -1602,6 +1609,7 @@ class ITranslatorTextarea extends HTMLElement {
 
   disconnectedCallback() {
     document.removeEventListener('click', this.closeSettingsWhenClickedOutside);
+    document.removeEventListener('selectionchange', this.handleSelectionChange);
     document.removeEventListener('keydown', this.closeSettingsOnEscape, true);
     document.removeEventListener('keydown', this.closeHelpOnEscape, true);
     document.removeEventListener('keydown', this.closeTagsOnEscape, true);
@@ -1985,6 +1993,11 @@ class ITranslatorTextarea extends HTMLElement {
     if ((event.ctrlKey && key === 'e') || event.key === 'Escape') {
       event.preventDefault(); this.setMode('english'); return;
     }
+    if (event.isComposing || this.isComposing) {
+      this.flushBuffer();
+      if (this.isNativeEdit(event)) this.beginHistoryBatch();
+      return;
+    }
     if (this.mode === 'english') {
       if (this.isNativeEdit(event)) this.beginHistoryBatch();
       return;
@@ -1993,7 +2006,10 @@ class ITranslatorTextarea extends HTMLElement {
       this.flushBuffer(); this.beginHistoryBatch(); return;
     }
     if (event.key === 'Backspace' && this.rawBuffer) {
-      event.preventDefault(); this.beginHistoryBatch(); this.rawBuffer = this.rawBuffer.slice(0, -1); this.replaceBuffer(); return;
+      if (this.bufferMatchesCaret()) {
+        event.preventDefault(); this.beginHistoryBatch(); this.rawBuffer = this.rawBuffer.slice(0, -1); this.replaceBuffer(); return;
+      }
+      this.flushBuffer();
     }
     if (event.key === 'Backspace') {
       this.beginHistoryBatch(); return;
@@ -2007,6 +2023,7 @@ class ITranslatorTextarea extends HTMLElement {
     if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
       event.preventDefault();
       this.beginHistoryBatch();
+      if (this.rawBuffer && !this.bufferMatchesCaret()) this.flushBuffer();
       this.rawBuffer += event.key;
       this.replaceBuffer();
       if (/\s/.test(event.key)) { this.flushBuffer(); this.endHistoryBatch(); }
@@ -2051,6 +2068,20 @@ class ITranslatorTextarea extends HTMLElement {
   flushBuffer() {
     this.rawBuffer = '';
     this.bufferRange = null;
+  }
+
+  bufferMatchesCaret() {
+    if (!this.rawBuffer || !this.bufferRange) return false;
+    const selection = window.getSelection();
+    if (!selection?.rangeCount || !selection.isCollapsed || !this.input.contains(selection.anchorNode)) return false;
+    const caret = selection.getRangeAt(0);
+    try {
+      if (!this.input.contains(this.bufferRange.commonAncestorContainer)) return false;
+      if (this.bufferRange.toString() !== this.transliterate(this.rawBuffer)) return false;
+      return this.bufferRange.compareBoundaryPoints(Range.END_TO_END, caret) === 0;
+    } catch {
+      return false;
+    }
   }
 
   selectRange(range) {
