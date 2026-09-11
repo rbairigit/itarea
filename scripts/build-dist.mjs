@@ -37,6 +37,7 @@ const fontFiles = [
   'NotoSerifDevanagari-Regular.ttf',
   'TiroDevanagariSanskrit-Regular.ttf',
   'Sanskrit-2003-Font.ttf',
+  'Sanskrit2020.otf',
   'Chandas_Font.ttf',
   'material-symbols-outlined.woff2',
   'OFL-Noto-Sans-Devanagari.txt',

@@ -3,6 +3,7 @@
 @font-face { font-family: "ITArea Noto Serif Devanagari"; src: url("../fonts/NotoSerifDevanagari-Regular.ttf") format("truetype"); font-display: swap; }
 @font-face { font-family: "ITArea Tiro Devanagari Sanskrit"; src: url("../fonts/TiroDevanagariSanskrit-Regular.ttf") format("truetype"); font-display: swap; }
 @font-face { font-family: "ITArea Sanskrit 2003"; src: url("../fonts/Sanskrit-2003-Font.ttf") format("truetype"); font-display: swap; }
+@font-face { font-family: "ITArea Sanskrit 2020"; src: url("../fonts/Sanskrit2020.otf") format("opentype"); font-display: swap; }
 @font-face { font-family: "ITArea Chandas"; src: url("../fonts/Chandas_Font.ttf") format("truetype"); font-display: swap; }
 @font-face { font-family: "ITF Devanagari"; src: local("ITFDevanagari-Book"), local("ITF Devanagari Book"); font-style: normal; font-weight: 400; }
 @font-face { font-family: "ITF Devanagari"; src: local("ITFDevanagari-Medium"), local("ITF Devanagari Medium"); font-style: normal; font-weight: 500; }

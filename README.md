@@ -91,7 +91,7 @@ to selected text, or to subsequently typed text when only the caret is present.
 The default uses ITF Devanagari when that font is installed and automatically
 falls back to the bundled Noto Sans Devanagari otherwise. The starter package
 also includes Noto Serif Devanagari, Tiro Devanagari Sanskrit, Sanskrit 2003,
-and Chandas, plus a System default choice. The existing `setITranslatorFont()` API remains available when
+Sanskrit 2020, and Chandas, plus a System default choice. The existing `setITranslatorFont()` API remains available when
 a host page needs to change the base font for every widget:
 
 ```js
