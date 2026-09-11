@@ -15,10 +15,10 @@ function createTransliterator(config, target = config.defaultTarget) {
       return output;
     };
   }
-  const tokens = { ...config.tokens, ...config.aliases, ...config.punctuation };
+  const tokens = { ...config.tokens, ...config.aliases, ...config.punctuation, ...(targetConfig.tokens || {}) };
   const keys = Object.keys(tokens).sort((a, b) => b.length - a.length);
   const consonants = new Set(['k','kh','g','gh','~N','ch','Ch','j','jh','~n','T','Th','D','Dh','N','t','th','d','dh','n','p','ph','b','bh','m','y','r','l','v','w','sh','Sh','S','s','h','L','kSh','kS','j~n']);
-  const vowelMarks = { a: '', A: 'ा', aa: 'ा', i: 'ि', I: 'ी', ii: 'ी', ee: 'ी', u: 'ु', U: 'ू', uu: 'ू', e: 'े', ai: 'ै', o: 'ो', au: 'ौ', RRi: 'ृ', 'R^i': 'ृ', RRI: 'ॄ', 'R^I': 'ॄ', LLi: 'ॢ', 'L^i': 'ॢ', LLI: 'ॣ', 'L^I': 'ॣ', ...(config.vowelMarks || {}) };
+  const vowelMarks = { a: '', A: 'ा', aa: 'ा', i: 'ि', I: 'ी', ii: 'ी', ee: 'ी', u: 'ु', U: 'ू', uu: 'ू', e: 'े', E: 'े', ai: 'ै', o: 'ो', O: 'ो', au: 'ौ', RRi: 'ृ', 'R^i': 'ृ', RRI: 'ॄ', 'R^I': 'ॄ', LLi: 'ॢ', 'L^i': 'ॢ', LLI: 'ॣ', 'L^I': 'ॣ', ...(config.vowelMarks || {}), ...(targetConfig.vowelMarks || {}) };
   const independentVowels = new Set(Object.keys(vowelMarks));
 
   const devanagari = (input) => {
@@ -48,9 +48,9 @@ function createTransliterator(config, target = config.defaultTarget) {
   }
   if (targetConfig.transform === 'tamil') {
     const tamil = {
-      'अ':'அ','आ':'ஆ','इ':'இ','ई':'ஈ','उ':'உ','ऊ':'ஊ','ऋ':'஋','ॠ':'௠','ऌ':'஌','ॡ':'௡','ए':'ஏ','ऐ':'ஐ','ओ':'ஓ','औ':'ஔ',
-      'ा':'ா','ि':'ி','ी':'ீ','ु':'ு','ू':'ூ','ृ':'்ரு','ॄ':'்ரூ','ॢ':'்லு','ॣ':'்லூ','े':'ே','ै':'ை','ो':'ோ','ौ':'ௌ',
-      'क':'க','ख':'க','ग':'க','घ':'க','ङ':'ங','च':'ச','छ':'ச','ज':'ஜ','झ':'ஜ','ञ':'ஞ','ट':'ட','ठ':'ட','ड':'ட','ढ':'ட','ण':'ண','त':'த','थ':'த','द':'த','ध':'த','न':'ந','प':'ப','फ':'ப','ब':'ப','भ':'ப','म':'ம','य':'ய','र':'ர','ल':'ல','व':'வ','ळ':'ள','श':'ஶ','ष':'ஷ','स':'ஸ','ह':'ஹ',
+      'अ':'அ','आ':'ஆ','इ':'இ','ई':'ஈ','उ':'உ','ऊ':'ஊ','ऋ':'஋','ॠ':'௠','ऌ':'஌','ॡ':'௡','ऎ':'எ','ए':'ஏ','ऐ':'ஐ','ऒ':'ஒ','ओ':'ஓ','औ':'ஔ',
+      'ा':'ா','ि':'ி','ी':'ீ','ु':'ு','ू':'ூ','ृ':'்ரு','ॄ':'்ரூ','ॢ':'்லு','ॣ':'்லூ','ॆ':'ெ','े':'ே','ै':'ை','ॊ':'ொ','ो':'ோ','ौ':'ௌ',
+      'क':'க','ख':'க','ग':'க','घ':'க','ङ':'ங','च':'ச','छ':'ச','ज':'ஜ','झ':'ஜ','ञ':'ஞ','ट':'ட','ठ':'ட','ड':'ட','ढ':'ட','ण':'ண','त':'த','थ':'த','द':'த','ध':'த','न':'ந','प':'ப','फ':'ப','ब':'ப','भ':'ப','म':'ம','य':'ய','र':'ர','ऱ':'ற','ल':'ல','व':'வ','ळ':'ள','श':'ஶ','ष':'ஷ','स':'ஸ','ह':'ஹ',
       'ं':'ம்','ः':'ஃ','ँ':'ம்','्':'்','ऽ':'ऽ','।':'।','॥':'॥','ॐ':'ௐ',
       '०':'௦','१':'௧','२':'௨','३':'௩','४':'௪','५':'௫','६':'௬','७':'௭','८':'௮','९':'௯'
     };
@@ -70,7 +70,7 @@ const audioIcons = {
 };
 
 function audioDialogMarkup() {
-  return `<div class="itarea__audio-overlay" data-audio-dialog hidden><section class="itarea__audio-dialog" role="dialog" aria-modal="true" aria-label="Record and edit audio"><header><h2>Record and edit audio</h2><button type="button" class="itarea__audio-close" data-audio-close aria-label="Close audio editor">×</button></header><p class="itarea__audio-status" data-audio-status role="status">Ready to record.</p><div class="itarea__audio-recorder"><canvas data-live-waveform width="720" height="86" aria-label="Live recording waveform"></canvas><div class="itarea__audio-record-row"><span data-record-time>0:00 / 5:00</span><button type="button" data-start-recording>${audioIcons.record}<span>Record</span></button><button type="button" data-stop-recording disabled>${audioIcons.stop}<span>Stop</span></button></div></div><div class="itarea__audio-editor" data-audio-editor hidden><audio data-editor-player controls preload="metadata"></audio><canvas data-audio-waveform width="720" height="128" aria-label="Editable audio waveform"></canvas><div class="itarea__audio-readout"><span><strong>Duration:</strong> <span data-audio-duration>0:00</span></span><span><strong>Selection:</strong> <span data-audio-selection>No selection</span></span></div><div class="itarea__audio-tool-grid"><section><h3>Preview</h3><div><button type="button" data-play-audio>Play / Pause</button><button type="button" data-play-selection disabled>Play selection</button></div></section><section><h3>Edit selection</h3><div><button type="button" data-delete-selection disabled>Delete</button><button type="button" data-silence-selection disabled>Silence</button></div></section><section><h3>History</h3><div><button type="button" data-audio-undo disabled>Undo</button><button type="button" data-audio-redo disabled>Redo</button><button type="button" data-audio-reset disabled>Reset</button></div></section><section><h3>Insert silence</h3><label>Seconds <input type="number" data-pause-duration min="0.1" max="10" step="0.1" value="1"></label><div><button type="button" data-insert-silence="start">At start</button><button type="button" data-insert-silence="cursor">At cursor</button><button type="button" data-insert-silence="end">At end</button></div></section></div><footer><button type="button" class="primary" data-save-audio>Save audio</button><a data-download-audio download>Download</a><button type="button" class="danger" data-delete-audio>Delete saved audio</button></footer></div></section></div>`;
+  return `<div class="itarea__audio-overlay" data-audio-dialog hidden><section class="itarea__audio-dialog" role="dialog" aria-modal="true" aria-label="Record and edit audio"><header><h2>Record and edit audio</h2><button type="button" class="itarea__audio-close" data-audio-close aria-label="Close audio editor">×</button></header><p class="itarea__audio-status" data-audio-status role="status">Ready to record.</p><div class="itarea__audio-recorder"><canvas data-live-waveform width="720" height="86" aria-label="Live recording waveform" hidden></canvas><div class="itarea__audio-record-row"><span data-record-time hidden>0:00 / 5:00</span><button type="button" data-start-recording>${audioIcons.record}<span>Record</span></button><button type="button" data-stop-recording disabled hidden>${audioIcons.stop}<span>Stop</span></button></div></div><div class="itarea__audio-editor" data-audio-editor hidden><audio data-editor-player preload="metadata" hidden></audio><canvas data-audio-waveform width="720" height="128" aria-label="Editable audio waveform"></canvas><div class="itarea__audio-readout"><span><strong>Duration:</strong> <span data-audio-duration>0:00</span></span><span><strong>Selection:</strong> <span data-audio-selection>No selection</span></span></div><div class="itarea__audio-tool-grid"><section><h3>Preview</h3><div><button type="button" data-play-audio>Play / Pause</button><button type="button" data-play-selection disabled>Play selection</button></div></section><section><h3>Edit selection</h3><div><button type="button" data-delete-selection disabled>Delete</button><button type="button" data-silence-selection disabled>Silence</button></div></section><section><h3>History</h3><div><button type="button" data-audio-undo disabled>Undo</button><button type="button" data-audio-redo disabled>Redo</button><button type="button" data-audio-reset disabled>Reset</button></div></section><section><h3>Insert silence</h3><label>Seconds <input type="number" data-pause-duration min="0.1" max="10" step="0.1" value="1"></label><div><button type="button" data-insert-silence="start">At start</button><button type="button" data-insert-silence="cursor">At cursor</button><button type="button" data-insert-silence="end">At end</button></div></section></div><footer><button type="button" class="primary" data-save-audio>Save audio</button><a data-download-audio download>Download</a><button type="button" class="danger" data-delete-audio>Delete saved audio</button></footer></div></section></div>`;
 }
 
 function formatTime(seconds, decimals = false) {
@@ -141,10 +141,12 @@ function drawWaveform(canvas, buffer, selection, cursorSeconds) {
   const height = Math.max(1, Math.round((box.height || 128) * ratio));
   if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
   const context = canvas.getContext('2d');
-  context.clearRect(0, 0, width, height); context.fillStyle = '#fff'; context.fillRect(0, 0, width, height);
+  const theme = getComputedStyle(canvas);
+  const color = (name, fallback) => theme.getPropertyValue(name).trim() || fallback;
+  context.clearRect(0, 0, width, height); context.fillStyle = color('--itarea-waveform-background', '#fff'); context.fillRect(0, 0, width, height);
   if (!buffer) return;
   const data = buffer.getChannelData(0); const samplesPerPixel = Math.max(1, Math.floor(data.length / width));
-  context.strokeStyle = '#7a9b8c'; context.lineWidth = Math.max(1, ratio); context.beginPath();
+  context.strokeStyle = color('--itarea-waveform-color', '#7a9b8c'); context.lineWidth = Math.max(1, ratio); context.beginPath();
   for (let x = 0; x < width; x++) {
     let min = 1; let max = -1; const start = x * samplesPerPixel; const finish = Math.min(data.length, start + samplesPerPixel);
     for (let index = start; index < finish; index++) { min = Math.min(min, data[index]); max = Math.max(max, data[index]); }
@@ -153,10 +155,10 @@ function drawWaveform(canvas, buffer, selection, cursorSeconds) {
   context.stroke();
   if (selection) {
     const left = selection.start / buffer.duration * width; const right = selection.end / buffer.duration * width;
-    context.fillStyle = 'rgba(119,75,10,.22)'; context.fillRect(left, 0, Math.max(1, right - left), height);
+    context.fillStyle = color('--itarea-waveform-selection', 'rgba(119,75,10,.22)'); context.fillRect(left, 0, Math.max(1, right - left), height);
   }
   const cursor = Math.max(0, Math.min(width, cursorSeconds / buffer.duration * width));
-  context.strokeStyle = '#774b0a'; context.lineWidth = 2 * ratio; context.beginPath(); context.moveTo(cursor, 0); context.lineTo(cursor, height); context.stroke();
+  context.strokeStyle = color('--itarea-waveform-cursor', '#774b0a'); context.lineWidth = 2 * ratio; context.beginPath(); context.moveTo(cursor, 0); context.lineTo(cursor, height); context.stroke();
 }
 
 function audioExtension(type) {
@@ -185,7 +187,7 @@ function createAudioController(widget) {
   const download = widget.querySelector('[data-download-audio]');
   let savedBlob = null; let savedDurationMs = 0; let savedText = ''; let savedUrl = null;
   let workingBlob = null; let workingBuffer = null; let originalBuffer = null; let workingUrl = null;
-  let audioContext = null; let selection = null; let cursorSeconds = 0; let selectionEnd = null;
+  let audioContext = null; let selection = null; let cursorSeconds = 0; let selectionEnd = null; let playbackFrame = null;
   let undoStack = []; let redoStack = []; let edited = false;
   let recorder = null; let stream = null; let chunks = []; let recordingStarted = 0; let limitTimer = null; let timerId = null;
   let liveContext = null; let liveAnalyser = null; let liveSource = null; let liveFrame = null; let destroyed = false;
@@ -224,6 +226,35 @@ function createAudioController(widget) {
     widget.querySelector('[data-audio-reset]').disabled = !edited;
     saveButton.disabled = !workingBlob;
     drawWaveform(waveform, workingBuffer, selection, cursorSeconds);
+  };
+  const stopPlaybackMonitor = () => {
+    if (playbackFrame !== null) cancelAnimationFrame(playbackFrame);
+    playbackFrame = null;
+  };
+  const finishSelectionPlayback = () => {
+    if (selectionEnd === null) return;
+    const end = selectionEnd;
+    selectionEnd = null;
+    try { player.currentTime = end; } catch {}
+    player.pause();
+    stopPlaybackMonitor();
+    cursorSeconds = end;
+    drawWaveform(waveform, workingBuffer, selection, cursorSeconds);
+  };
+  const monitorPlayback = () => {
+    playbackFrame = null;
+    if (destroyed || player.paused || player.ended) return;
+    if (selectionEnd !== null && player.currentTime >= selectionEnd) {
+      finishSelectionPlayback();
+      return;
+    }
+    cursorSeconds = selectionEnd === null ? player.currentTime : Math.min(player.currentTime, selectionEnd);
+    drawWaveform(waveform, workingBuffer, selection, cursorSeconds);
+    playbackFrame = requestAnimationFrame(monitorPlayback);
+  };
+  const startPlaybackMonitor = () => {
+    stopPlaybackMonitor();
+    playbackFrame = requestAnimationFrame(monitorPlayback);
   };
   const decode = async blob => {
     const Context = window.AudioContext || window.webkitAudioContext;
@@ -264,6 +295,7 @@ function createAudioController(widget) {
   };
   const clearWorking = () => {
     player.pause();
+    stopPlaybackMonitor();
     workingBlob = null; workingBuffer = null; originalBuffer = null;
     selection = null; cursorSeconds = 0; selectionEnd = null;
     undoStack = []; redoStack = []; edited = false;
@@ -281,7 +313,7 @@ function createAudioController(widget) {
     liveContext = new Context(); await liveContext.resume(); liveAnalyser = liveContext.createAnalyser(); liveAnalyser.fftSize = 1024;
     liveSource = liveContext.createMediaStreamSource(mediaStream); liveSource.connect(liveAnalyser);
     const data = new Uint8Array(liveAnalyser.fftSize); const context = liveCanvas.getContext('2d');
-    const draw = () => { const width = liveCanvas.width; const height = liveCanvas.height; liveAnalyser.getByteTimeDomainData(data); context.clearRect(0, 0, width, height); context.fillStyle = '#fff'; context.fillRect(0, 0, width, height); context.strokeStyle = '#a52720'; context.lineWidth = 2; context.beginPath(); data.forEach((sample, index) => { const x = index / (data.length - 1) * width; const y = sample / 255 * height; index ? context.lineTo(x, y) : context.moveTo(x, y); }); context.stroke(); liveFrame = requestAnimationFrame(draw); };
+    const draw = () => { const width = liveCanvas.width; const height = liveCanvas.height; const theme = getComputedStyle(liveCanvas); const color = (name, fallback) => theme.getPropertyValue(name).trim() || fallback; liveAnalyser.getByteTimeDomainData(data); context.clearRect(0, 0, width, height); context.fillStyle = color('--itarea-waveform-background', '#fff'); context.fillRect(0, 0, width, height); context.strokeStyle = color('--itarea-live-waveform-color', '#a52720'); context.lineWidth = 2; context.beginPath(); data.forEach((sample, index) => { const x = index / (data.length - 1) * width; const y = sample / 255 * height; index ? context.lineTo(x, y) : context.moveTo(x, y); }); context.stroke(); liveFrame = requestAnimationFrame(draw); };
     draw();
   };
   const finishRecording = () => {
@@ -299,17 +331,19 @@ function createAudioController(widget) {
       recorder.onstop = async() => {
         clearTimeout(limitTimer); clearInterval(timerId); stopLiveWaveform(); stream?.getTracks().forEach(track => track.stop()); stream = null;
         const blob = new Blob(chunks, { type: recorder.mimeType || type || 'audio/webm' });
-        startButton.disabled = false; stopButton.disabled = true; timer.textContent = `${formatTime((performance.now() - recordingStarted) / 1000)} / 5:00`;
+        startButton.disabled = false; startButton.hidden = false; stopButton.disabled = true; stopButton.hidden = true;
+        liveCanvas.hidden = true; timer.hidden = true; timer.textContent = `${formatTime((performance.now() - recordingStarted) / 1000)} / 5:00`;
         try { await loadWorking(blob); } catch (error) { setStatus(error.message || 'The recording could not be decoded.', true); }
         if (activeController === controller) activeController = null;
       };
       recorder.onerror = () => setStatus('The recording could not be completed.', true);
-      recorder.start(250); recordingStarted = performance.now(); startButton.disabled = true; stopButton.disabled = false; editor.hidden = true;
+      recorder.start(250); recordingStarted = performance.now(); startButton.disabled = true; startButton.hidden = true;
+      stopButton.disabled = false; stopButton.hidden = false; liveCanvas.hidden = false; timer.hidden = false; editor.hidden = true;
       setStatus('Recording…');
       try { await startLiveWaveform(stream); } catch { stopLiveWaveform(); }
       timerId = setInterval(() => { timer.textContent = `${formatTime((performance.now() - recordingStarted) / 1000)} / 5:00`; }, 250);
       limitTimer = setTimeout(() => { finishRecording(); setStatus('Recording stopped at the five-minute limit.'); }, AUDIO_MAX_DURATION_MS);
-    } catch (error) { stream?.getTracks().forEach(track => track.stop()); stream = null; startButton.disabled = false; stopButton.disabled = true; setStatus(`Microphone access failed: ${error.message || error.name}`, true); }
+    } catch (error) { stream?.getTracks().forEach(track => track.stop()); stream = null; startButton.disabled = false; startButton.hidden = false; stopButton.disabled = true; stopButton.hidden = true; liveCanvas.hidden = true; timer.hidden = true; setStatus(`Microphone access failed: ${error.message || error.name}`, true); }
   };
   const close = () => {
     if (recorder?.state === 'recording') { finishRecording(); setStatus('Recording stopped. Close again after processing.'); return; }
@@ -345,10 +379,41 @@ function createAudioController(widget) {
   startButton.addEventListener('click', startRecording); stopButton.addEventListener('click', finishRecording);
   outsideAudio.addEventListener('ended', () => { outsidePlay.innerHTML = audioIcons.play; updateOutside(); });
   outsideAudio.addEventListener('pause', () => { outsidePlay.innerHTML = audioIcons.play; });
-  widget.querySelector('[data-play-audio]').addEventListener('click', () => player.paused ? player.play() : player.pause());
-  widget.querySelector('[data-play-selection]').addEventListener('click', () => { if (!selection) return; player.currentTime = selection.start; selectionEnd = selection.end; player.play(); });
-  player.addEventListener('timeupdate', () => { cursorSeconds = player.currentTime; if (selectionEnd !== null && player.currentTime >= selectionEnd) { player.pause(); selectionEnd = null; } drawWaveform(waveform, workingBuffer, selection, cursorSeconds); });
-  player.addEventListener('ended', () => { selectionEnd = null; });
+  widget.querySelector('[data-play-audio]').addEventListener('click', () => {
+    selectionEnd = null;
+    if (player.paused) player.play().catch(() => {});
+    else player.pause();
+  });
+  widget.querySelector('[data-play-selection]').addEventListener('click', () => {
+    if (!selection) return;
+    stopPlaybackMonitor();
+    selectionEnd = selection.end;
+    player.currentTime = selection.start;
+    cursorSeconds = selection.start;
+    drawWaveform(waveform, workingBuffer, selection, cursorSeconds);
+    if (player.paused) player.play().catch(() => { selectionEnd = null; stopPlaybackMonitor(); });
+    else startPlaybackMonitor();
+  });
+  player.addEventListener('play', startPlaybackMonitor);
+  player.addEventListener('pause', () => {
+    stopPlaybackMonitor();
+    if (selectionEnd !== null) selectionEnd = null;
+    cursorSeconds = player.currentTime;
+    drawWaveform(waveform, workingBuffer, selection, cursorSeconds);
+  });
+  player.addEventListener('timeupdate', () => {
+    if (selectionEnd !== null && player.currentTime >= selectionEnd) {
+      finishSelectionPlayback();
+      return;
+    }
+    cursorSeconds = selectionEnd === null ? player.currentTime : Math.min(player.currentTime, selectionEnd);
+    drawWaveform(waveform, workingBuffer, selection, cursorSeconds);
+  });
+  player.addEventListener('ended', () => {
+    stopPlaybackMonitor(); selectionEnd = null;
+    cursorSeconds = workingBuffer?.duration || player.duration || 0;
+    drawWaveform(waveform, workingBuffer, selection, cursorSeconds);
+  });
   waveform.addEventListener('pointerdown', event => {
     if (!workingBuffer) return; waveform.setPointerCapture(event.pointerId);
     const box = waveform.getBoundingClientRect(); const start = Math.max(0, Math.min(workingBuffer.duration, (event.clientX - box.left) / box.width * workingBuffer.duration));
@@ -401,7 +466,7 @@ function createAudioController(widget) {
       await removeSaved();
       clearWorking();
     },
-    destroy() { destroyed = true; document.removeEventListener('keydown', escape, true); window.removeEventListener('resize', redraw); finishRecording(); stream?.getTracks().forEach(track => track.stop()); stopLiveWaveform(); player.pause(); outsideAudio.pause(); outsideAudio.removeAttribute('src'); revoke(savedUrl); revoke(workingUrl); audioContext?.close().catch(() => {}); if (activeController === controller) activeController = null; },
+    destroy() { destroyed = true; document.removeEventListener('keydown', escape, true); window.removeEventListener('resize', redraw); finishRecording(); stream?.getTracks().forEach(track => track.stop()); stopLiveWaveform(); stopPlaybackMonitor(); player.pause(); outsideAudio.pause(); outsideAudio.removeAttribute('src'); revoke(savedUrl); revoke(workingUrl); audioContext?.close().catch(() => {}); if (activeController === controller) activeController = null; },
   };
   return controller;
 }
@@ -676,13 +741,14 @@ function createDocumentController(widget, version) {
     content: {
       text: widget.value,
       html: widget.htmlValue,
+      lastUpdatedAt: widget.getState().content.lastUpdatedAt,
       language: widget.target,
       mode: widget.mode,
       font: widget.font,
       fontSize: Number.parseInt(widget.fontSize, 10),
     },
     metadata: { tags: widget.tags },
-    audio: audio ? { included: true, file: 'audio.wav', mimeType: 'audio/wav', durationMs: audio.durationMs } : { included: false },
+    audio: audio ? { included: true, file: 'audio.wav', mimeType: 'audio/wav', durationMs: audio.durationMs, lastUpdatedAt: widget.getState().audio.lastUpdatedAt } : { included: false, lastUpdatedAt: null },
   });
 
   const save = async() => {
@@ -703,7 +769,7 @@ function createDocumentController(widget, version) {
         }
       }
       if (!handle) {
-        const entered = window.prompt('Save iTranslator document as:', suggestedName);
+        const entered = await widget.uiDialog.prompt('Enter a filename for this iTranslator document.', suggestedName, { title: 'Save document', inputLabel: 'Document filename', confirmLabel: 'Save' });
         if (entered === null) return;
         filename = safeFilename(entered);
       }
@@ -722,7 +788,7 @@ function createDocumentController(widget, version) {
       markSaved();
       widget.dispatchEvent(new CustomEvent('documentsave', { bubbles: true, detail: { filename, size: archive.size } }));
     } catch (error) {
-      if (error?.name !== 'AbortError') { showFeedback('Save failed', true); window.alert(`The document could not be saved.\n\n${error.message || error}`); }
+      if (error?.name !== 'AbortError') { showFeedback('Save failed', true); await widget.uiDialog.alert(`The document could not be saved.\n\n${error.message || error}`, { title: 'Save failed' }); }
     } finally { saveButton.disabled = false; }
   };
 
@@ -734,7 +800,7 @@ function createDocumentController(widget, version) {
       await widget.audioController?.ready;
       if (!widget.supportsTarget(manifest.content.language)) throw new Error(`Unsupported language: ${manifest.content.language}`);
       const hasExisting = Boolean(widget.value.trim() || widget.audioBlob || widget.tags.length > 1);
-      if (hasExisting && !window.confirm('Opening this file will overwrite the existing text, tags, and recorded audio in this text area. Continue?')) { showFeedback('Open cancelled'); return; }
+      if (hasExisting && !await widget.uiDialog.confirm('Opening this file will overwrite the existing text, tags, and recorded audio in this text area. Continue?', { title: 'Replace existing content?', confirmLabel: 'Open document', danger: true })) { showFeedback('Open cancelled'); return; }
       const warnings = [];
       widget.setTarget(manifest.content.language);
       try { widget.setFont(manifest.content.font); }
@@ -746,13 +812,17 @@ function createDocumentController(widget, version) {
       widget.tags = manifest.metadata?.tags || [{ name: 'type', value: 'rich-text-audio' }];
       if (audio) await widget.audioController.importAudio(audio);
       else await widget.audioController.clearAudio();
+      widget._setLastUpdatedTimes?.({
+        content: manifest.content.lastUpdatedAt || manifest.createdAt || null,
+        audio: audio ? (manifest.audio?.lastUpdatedAt || manifest.createdAt || null) : null,
+      });
       showFeedback('Opened');
       markSaved();
       widget.dispatchEvent(new CustomEvent('documentopen', { bubbles: true, detail: { filename: file.name, manifest } }));
-      if (warnings.length) window.alert(warnings.join('\n'));
+      if (warnings.length) await widget.uiDialog.alert(warnings.join('\n'), { title: 'Document opened with changes' });
     } catch (error) {
       showFeedback('Open failed', true);
-      window.alert(`The document could not be opened.\n\n${error.message || error}`);
+      await widget.uiDialog.alert(`The document could not be opened.\n\n${error.message || error}`, { title: 'Open failed' });
     } finally { openButton.disabled = false; fileInput.value = ''; }
   };
 
@@ -767,6 +837,7 @@ function createDocumentController(widget, version) {
     open: () => fileInput.click(),
     markDirty,
     markSaved,
+    get dirty() { return dirty; },
     destroy() {
       clearTimeout(feedbackTimer);
       widget.removeEventListener('audiochange', markDirty);
@@ -1086,15 +1157,15 @@ function createRichTextController(widget) {
     }
     changed();
   }));
-  widget.querySelector('[data-format-link]').addEventListener('click', () => {
+  widget.querySelector('[data-format-link]').addEventListener('click', async() => {
     if (!restore()) return;
     const range = selectionInside(editor);
     const active = (range?.startContainer.nodeType === Node.ELEMENT_NODE ? range.startContainer : range?.startContainer.parentElement)?.closest?.('a');
-    const address = window.prompt('Web address (http:// or https://). Leave blank to remove the current link.', active?.href || 'https://');
+    const address = await widget.uiDialog.prompt('Enter a web address beginning with http:// or https://. Leave it blank to remove the current link.', active?.href || 'https://', { title: 'Add or edit link', inputLabel: 'Web address', confirmLabel: 'Apply link' });
     if (address === null) return;
     if (!address.trim()) command('unlink');
     else if (/^https?:\/\//i.test(address.trim())) command('createLink', address.trim());
-    else window.alert('Please enter a web address beginning with http:// or https://');
+    else await widget.uiDialog.alert('Please enter a web address beginning with http:// or https://.', { title: 'Invalid web address' });
   });
   widget.querySelector('[data-format-clear]').addEventListener('click', () => { command('removeFormat'); command('unlink'); });
   editor.addEventListener('mouseup', remember);
@@ -1128,7 +1199,8 @@ const MIN_FONT_SIZE = 14;
 const MAX_FONT_SIZE = 48;
 const HISTORY_LIMIT = 100;
 const WIDGET_VERSION = '1.3.0';
-const WIDGET_UPDATED = 'September 11, 2026';
+const WIDGET_UPDATED = 'September 11, 2026 at 2:45 AM (UTC+8)';
+const WIDGET_UPDATED_ISO = '2026-09-11T02:45:04+08:00';
 let pageFontSize = '24px';
 const settingsIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.43 12.98c.04-.32.07-.65.07-.98s-.02-.66-.07-.98l2.11-1.65a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.61-.22l-2.49 1a7.36 7.36 0 0 0-1.69-.98L14.5 2.42A.49.49 0 0 0 14 2h-4a.49.49 0 0 0-.49.42l-.38 2.65c-.61.25-1.18.59-1.69.98l-2.49-1a.49.49 0 0 0-.61.22l-2 3.46a.5.5 0 0 0 .12.64l2.11 1.65c-.04.32-.08.65-.08.98s.03.66.08.98l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46c.12.22.38.31.61.22l2.49-1c.51.4 1.08.73 1.69.98l.38 2.65c.04.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.18-.58 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.65ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z"/></svg>';
 const copyIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1Zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2Zm0 16H8V7h11v14Z"/></svg>';
@@ -1194,6 +1266,68 @@ function tagsDialogMarkup() {
   return `<div class="itarea__tags-overlay" data-tags-dialog hidden><section class="itarea__tags-dialog" role="dialog" aria-modal="true" aria-label="Text area tags"><button type="button" class="itarea__tags-close" data-tags-close aria-label="Close tags">×</button><h2>Tags</h2><p>Add metadata that the containing page can query from this text area.</p><form class="itarea__tags-form" data-tags-form><label>Name <input type="text" data-tag-name maxlength="${MAX_TAG_NAME_LENGTH}" autocomplete="off"></label><span aria-hidden="true">=</span><label>Value <input type="text" data-tag-value maxlength="${MAX_TAG_VALUE_LENGTH}" autocomplete="off"></label><button type="submit">Add tag</button></form><p class="itarea__tags-error" data-tags-error role="alert" hidden></p><div class="itarea__tags-table-wrap"><table class="itarea__tags-table"><thead><tr><th>Name</th><th>Value</th><th>Delete</th></tr></thead><tbody data-tags-body></tbody></table></div></section></div>`;
 }
 
+function uiDialogMarkup() {
+  return `<div class="itarea__ui-overlay" data-ui-dialog hidden><section class="itarea__ui-dialog" role="dialog" aria-modal="true" aria-label="iTranslator dialog"><button type="button" class="itarea__ui-close" data-ui-close aria-label="Close">×</button><h2 data-ui-title></h2><p data-ui-message></p><input type="text" data-ui-input hidden><footer><button type="button" data-ui-cancel>Cancel</button><button type="button" class="primary" data-ui-confirm>OK</button></footer></section></div>`;
+}
+
+function createUiDialog(widget) {
+  const overlay = widget.querySelector('[data-ui-dialog]');
+  const title = widget.querySelector('[data-ui-title]');
+  const message = widget.querySelector('[data-ui-message]');
+  const input = widget.querySelector('[data-ui-input]');
+  const cancelButton = widget.querySelector('[data-ui-cancel]');
+  const confirmButton = widget.querySelector('[data-ui-confirm]');
+  const closeButton = widget.querySelector('[data-ui-close]');
+  let finish = null;
+  let kind = 'alert';
+  let returnFocus = null;
+
+  const close = accepted => {
+    if (!finish) return;
+    const resolve = finish;
+    finish = null;
+    overlay.hidden = true;
+    const value = kind === 'prompt' ? (accepted ? input.value : null) : kind === 'confirm' ? accepted : undefined;
+    resolve(value);
+    if (returnFocus?.isConnected) returnFocus.focus();
+  };
+  const show = options => new Promise(resolve => {
+    if (finish) close(false);
+    kind = options.kind || 'alert';
+    finish = resolve;
+    returnFocus = document.activeElement;
+    title.textContent = options.title || (kind === 'alert' ? 'Notice' : 'Please confirm');
+    message.textContent = options.message || '';
+    input.hidden = kind !== 'prompt';
+    input.value = options.value || '';
+    input.setAttribute('aria-label', options.inputLabel || title.textContent);
+    cancelButton.hidden = kind === 'alert';
+    cancelButton.textContent = options.cancelLabel || 'Cancel';
+    confirmButton.textContent = options.confirmLabel || (kind === 'prompt' ? 'Save' : kind === 'confirm' ? 'Continue' : 'OK');
+    confirmButton.classList.toggle('danger', Boolean(options.danger));
+    overlay.hidden = false;
+    queueMicrotask(() => (kind === 'prompt' ? input : confirmButton).focus());
+  });
+  const keydown = event => {
+    if (overlay.hidden) return;
+    if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close(false); }
+    else if (event.key === 'Enter' && (kind !== 'prompt' || document.activeElement === input)) {
+      event.preventDefault(); event.stopPropagation(); close(true);
+    }
+  };
+  confirmButton.addEventListener('click', () => close(true));
+  cancelButton.addEventListener('click', () => close(false));
+  closeButton.addEventListener('click', () => close(false));
+  overlay.addEventListener('click', event => { if (event.target === overlay) close(false); });
+  document.addEventListener('keydown', keydown, true);
+  return {
+    alert: (text, options = {}) => show({ ...options, kind: 'alert', message: text }),
+    confirm: (text, options = {}) => show({ ...options, kind: 'confirm', message: text }),
+    prompt: (text, value = '', options = {}) => show({ ...options, kind: 'prompt', message: text, value }),
+    destroy() { document.removeEventListener('keydown', keydown, true); if (finish) close(false); },
+  };
+}
+
 class ITranslatorTextarea extends HTMLElement {
   connectedCallback() {
     if (!pageConfig) throw new Error('Call configureITranslator(config) before adding i-translator-textarea elements.');
@@ -1234,7 +1368,7 @@ class ITranslatorTextarea extends HTMLElement {
     tagsButton.setAttribute('aria-label', 'Tags');
     tagsButton.innerHTML = tagsIcon;
     autoExpandToggle.insertAdjacentElement('afterend', tagsButton);
-    this.querySelector('.itarea').insertAdjacentHTML('beforeend', tagsDialogMarkup());
+    this.querySelector('.itarea').insertAdjacentHTML('beforeend', `${tagsDialogMarkup()}${uiDialogMarkup()}`);
     settingsPanel.insertAdjacentHTML('beforeend', `<label class="itarea__disable-sequence"><input type="checkbox" data-disable-sequence-enabled> <span>iTrans disable seq.</span><input type="text" data-disable-sequence maxlength="3" size="3" value=" = " aria-label="iTrans disable sequence"></label><div class="itarea__version">iTranslator ${WIDGET_VERSION}<br>Updated ${WIDGET_UPDATED}</div>`);
     const actions = this.querySelector('.itarea__actions');
     this.querySelector('[data-copy]').insertAdjacentHTML('afterend', '<span class="itarea__copy-feedback" data-copy-feedback role="status" aria-live="polite" hidden>Copied</span>');
@@ -1255,6 +1389,8 @@ class ITranslatorTextarea extends HTMLElement {
     this.rawBuffer = '';
     this.bufferRange = null;
     this.autoExpand = true;
+    this._contentLastUpdatedAt = null;
+    this._audioLastUpdatedAt = null;
     this._tags = new Map([[DEFAULT_TAG_NAME, DEFAULT_TAG_VALUE]]);
     this.target = pageTarget;
     this.font = pageFont;
@@ -1294,9 +1430,12 @@ class ITranslatorTextarea extends HTMLElement {
     this.querySelector('[data-format-size]').value = '24px';
     this.querySelector('[data-format-weight]').value = '600';
     this.setMode('itrans');
+    this.uiDialog = createUiDialog(this);
     this.audioController = createAudioController(this);
     this.documentController = createDocumentController(this, WIDGET_VERSION);
     this.richTextController = createRichTextController(this);
+    this.trackAudioUpdated = () => { this._audioLastUpdatedAt = new Date().toISOString(); };
+    this.addEventListener('audiochange', this.trackAudioUpdated);
     if (this._initialHtml !== undefined) {
       const initialHtml = this._initialHtml;
       delete this._initialHtml;
@@ -1446,6 +1585,7 @@ class ITranslatorTextarea extends HTMLElement {
     });
     this.input.addEventListener('keydown', event => this.handleKeydown(event));
     this.input.addEventListener('input', () => {
+      this._contentLastUpdatedAt = new Date().toISOString();
       this.adjustHeight();
       this.scheduleHistoryBoundary();
       this.audioController?.markTextChanged();
@@ -1469,6 +1609,8 @@ class ITranslatorTextarea extends HTMLElement {
     this.audioController?.destroy();
     this.documentController?.destroy();
     this.richTextController?.destroy();
+    this.uiDialog?.destroy();
+    this.removeEventListener('audiochange', this.trackAudioUpdated);
     clearTimeout(this.copyFeedbackTimer);
     clearTimeout(this.historyTimer);
   }
@@ -1703,10 +1845,10 @@ class ITranslatorTextarea extends HTMLElement {
     this.dispatchEvent(new CustomEvent(duplicate ? 'widgetduplicate' : 'widgetnew', { bubbles: true, detail: { source: this, widget: created } }));
   }
 
-  deleteGeneratedWidget() {
+  async deleteGeneratedWidget() {
     if (!this.hasAttribute('data-itarea-generated')) return;
     const hasContent = Boolean(this.value.trim() || this.audioBlob || this.tags.length > 1);
-    if (hasContent && !window.confirm('Delete this new text area and its unsaved content?')) return;
+    if (hasContent && !await this.uiDialog.confirm('Delete this new text area and its unsaved content?', { title: 'Delete text area?', confirmLabel: 'Delete', danger: true })) return;
     this.remove();
   }
 
@@ -1961,6 +2103,7 @@ class ITranslatorTextarea extends HTMLElement {
     }
     this.flushBuffer();
     this.input.textContent = text;
+    this._contentLastUpdatedAt = new Date().toISOString();
     this.clearHistory();
     this.adjustHeight();
     this.audioController?.markTextChanged();
@@ -1978,6 +2121,7 @@ class ITranslatorTextarea extends HTMLElement {
     this.flushBuffer();
     if (this.richTextController) this.richTextController.setHtml(html);
     else this.input.innerHTML = sanitizeRichHtml(html);
+    this._contentLastUpdatedAt = new Date().toISOString();
     this.clearHistory();
     this.adjustHeight();
     this.audioController?.markTextChanged();
@@ -1987,6 +2131,53 @@ class ITranslatorTextarea extends HTMLElement {
   get audioBlob() { return this.audioController?.blob || null; }
 
   get audioDurationMs() { return this.audioController?.durationMs || 0; }
+
+  _setLastUpdatedTimes({ content, audio } = {}) {
+    this._contentLastUpdatedAt = content || null;
+    this._audioLastUpdatedAt = audio || null;
+  }
+
+  getState() {
+    const label = this.getAttribute('label') || null;
+    const audioId = this.getAttribute('audio-id') || null;
+    const instanceName = this.getAttribute('name') || this.id || audioId || label;
+    return {
+      instanceName,
+      widgetVersion: WIDGET_VERSION,
+      widgetUpdatedAt: WIDGET_UPDATED_ISO,
+      tags: this.tags,
+      content: {
+        text: this.value,
+        html: this.htmlValue,
+        lastUpdatedAt: this._contentLastUpdatedAt,
+      },
+      defaultStyle: {
+        font: this.font,
+        fontSize: this.fontSize,
+        fontWeight: 600,
+      },
+      audio: {
+        blob: this.audioBlob,
+        durationMs: this.audioDurationMs,
+        lastUpdatedAt: this._audioLastUpdatedAt,
+      },
+      layout: {
+        autoExpand: this.autoExpand,
+        heightResizable: true,
+        widthResizable: this.widthResizable,
+      },
+      language: this.target,
+      mode: this.mode,
+      duplicateAudio: this.duplicateAudio,
+      dirty: this.documentController?.dirty ?? Boolean(this.value.trim()),
+      attributes: {
+        id: this.id || null,
+        name: this.getAttribute('name') || null,
+        label,
+        audioId,
+      },
+    };
+  }
 }
 
 customElements.define('i-translator-textarea', ITranslatorTextarea);
@@ -2020,6 +2211,8 @@ configureITranslator({
       "script": "Telugu",
       "transform": "script-offset",
       "offset": 768,
+      "tokens": { "e": "ऎ", "E": "ए", "o": "ऒ", "O": "ओ" },
+      "vowelMarks": { "e": "ॆ", "E": "े", "o": "ॊ", "O": "ो" },
       "replacements": { "ॐ": "ఓం" }
     },
     "kannada": {
@@ -2027,6 +2220,8 @@ configureITranslator({
       "script": "Kannada",
       "transform": "script-offset",
       "offset": 896,
+      "tokens": { "e": "ऎ", "E": "ए", "o": "ऒ", "O": "ओ" },
+      "vowelMarks": { "e": "ॆ", "E": "े", "o": "ॊ", "O": "ो" },
       "replacements": { "ॐ": "ॐ" }
     },
     "malayalam": {
@@ -2034,17 +2229,21 @@ configureITranslator({
       "script": "Malayalam",
       "transform": "script-offset",
       "offset": 1024,
+      "tokens": { "e": "ऎ", "E": "ए", "o": "ऒ", "O": "ओ", "Ra": "ऱ" },
+      "vowelMarks": { "e": "ॆ", "E": "े", "o": "ॊ", "O": "ो" },
       "replacements": { "ॐ": "ॐ" }
     },
     "tamil": {
       "label": "Tamil",
       "script": "Tamil",
-      "transform": "tamil"
+      "transform": "tamil",
+      "tokens": { "e": "ऎ", "E": "ए", "o": "ऒ", "O": "ओ", "Ra": "ऱ" },
+      "vowelMarks": { "e": "ॆ", "E": "े", "o": "ॊ", "O": "ो" }
     }
   },
   "tokens": {
     "a": "अ", "A": "आ", "aa": "आ", "i": "इ", "I": "ई", "ii": "ई", "ee": "ई",
-    "u": "उ", "U": "ऊ", "uu": "ऊ", "e": "ए", "ai": "ऐ", "o": "ओ", "au": "औ",
+    "u": "उ", "U": "ऊ", "uu": "ऊ", "e": "ए", "E": "ए", "ai": "ऐ", "o": "ओ", "O": "ओ", "au": "औ",
     "RRi": "ऋ", "R^i": "ऋ", "RRI": "ॠ", "R^I": "ॠ", "LLi": "ऌ", "L^i": "ऌ", "LLI": "ॡ", "L^I": "ॡ",
     "k": "क", "kh": "ख", "g": "ग", "gh": "घ", "~N": "ङ",
     "ch": "च", "Ch": "छ", "j": "ज", "jh": "झ", "~n": "ञ",
@@ -2066,7 +2265,7 @@ configureITranslator({
     "RR": "ॄ"
   },
   "iastTokens": {
-    "a": "a", "A": "ā", "aa": "ā", "i": "i", "I": "ī", "ii": "ī", "ee": "ī", "u": "u", "U": "ū", "uu": "ū", "e": "e", "ai": "ai", "o": "o", "au": "au",
+    "a": "a", "A": "ā", "aa": "ā", "i": "i", "I": "ī", "ii": "ī", "ee": "ī", "u": "u", "U": "ū", "uu": "ū", "e": "e", "E": "ē", "ai": "ai", "o": "o", "O": "ō", "au": "au",
     "R": "ṛ", "RR": "ṝ", "RRi": "ṛ", "R^i": "ṛ", "RRI": "ṝ", "R^I": "ṝ", "LLi": "ḷ", "L^i": "ḷ", "LLI": "ḹ", "L^I": "ḹ",
     "k": "k", "kh": "kh", "g": "g", "gh": "gh", "~N": "ṅ", "ch": "c", "Ch": "ch", "j": "j", "jh": "jh", "~n": "ñ",
     "T": "ṭ", "Th": "ṭh", "D": "ḍ", "Dh": "ḍh", "N": "ṇ", "t": "t", "th": "th", "d": "d", "dh": "dh", "n": "n",

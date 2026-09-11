@@ -309,15 +309,15 @@ export function createRichTextController(widget) {
     }
     changed();
   }));
-  widget.querySelector('[data-format-link]').addEventListener('click', () => {
+  widget.querySelector('[data-format-link]').addEventListener('click', async() => {
     if (!restore()) return;
     const range = selectionInside(editor);
     const active = (range?.startContainer.nodeType === Node.ELEMENT_NODE ? range.startContainer : range?.startContainer.parentElement)?.closest?.('a');
-    const address = window.prompt('Web address (http:// or https://). Leave blank to remove the current link.', active?.href || 'https://');
+    const address = await widget.uiDialog.prompt('Enter a web address beginning with http:// or https://. Leave it blank to remove the current link.', active?.href || 'https://', { title: 'Add or edit link', inputLabel: 'Web address', confirmLabel: 'Apply link' });
     if (address === null) return;
     if (!address.trim()) command('unlink');
     else if (/^https?:\/\//i.test(address.trim())) command('createLink', address.trim());
-    else window.alert('Please enter a web address beginning with http:// or https://');
+    else await widget.uiDialog.alert('Please enter a web address beginning with http:// or https://.', { title: 'Invalid web address' });
   });
   widget.querySelector('[data-format-clear]').addEventListener('click', () => { command('removeFormat'); command('unlink'); });
   editor.addEventListener('mouseup', remember);

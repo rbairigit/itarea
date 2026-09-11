@@ -12,7 +12,8 @@ const MIN_FONT_SIZE = 14;
 const MAX_FONT_SIZE = 48;
 const HISTORY_LIMIT = 100;
 const WIDGET_VERSION = '1.3.0';
-const WIDGET_UPDATED = 'September 11, 2026';
+const WIDGET_UPDATED = 'September 11, 2026 at 2:45 AM (UTC+8)';
+const WIDGET_UPDATED_ISO = '2026-09-11T02:45:04+08:00';
 let pageFontSize = '24px';
 const settingsIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.43 12.98c.04-.32.07-.65.07-.98s-.02-.66-.07-.98l2.11-1.65a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.61-.22l-2.49 1a7.36 7.36 0 0 0-1.69-.98L14.5 2.42A.49.49 0 0 0 14 2h-4a.49.49 0 0 0-.49.42l-.38 2.65c-.61.25-1.18.59-1.69.98l-2.49-1a.49.49 0 0 0-.61.22l-2 3.46a.5.5 0 0 0 .12.64l2.11 1.65c-.04.32-.08.65-.08.98s.03.66.08.98l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46c.12.22.38.31.61.22l2.49-1c.51.4 1.08.73 1.69.98l.38 2.65c.04.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.18-.58 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.65ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z"/></svg>';
 const copyIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1Zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2Zm0 16H8V7h11v14Z"/></svg>';
@@ -78,6 +79,68 @@ function tagsDialogMarkup() {
   return `<div class="itarea__tags-overlay" data-tags-dialog hidden><section class="itarea__tags-dialog" role="dialog" aria-modal="true" aria-label="Text area tags"><button type="button" class="itarea__tags-close" data-tags-close aria-label="Close tags">×</button><h2>Tags</h2><p>Add metadata that the containing page can query from this text area.</p><form class="itarea__tags-form" data-tags-form><label>Name <input type="text" data-tag-name maxlength="${MAX_TAG_NAME_LENGTH}" autocomplete="off"></label><span aria-hidden="true">=</span><label>Value <input type="text" data-tag-value maxlength="${MAX_TAG_VALUE_LENGTH}" autocomplete="off"></label><button type="submit">Add tag</button></form><p class="itarea__tags-error" data-tags-error role="alert" hidden></p><div class="itarea__tags-table-wrap"><table class="itarea__tags-table"><thead><tr><th>Name</th><th>Value</th><th>Delete</th></tr></thead><tbody data-tags-body></tbody></table></div></section></div>`;
 }
 
+function uiDialogMarkup() {
+  return `<div class="itarea__ui-overlay" data-ui-dialog hidden><section class="itarea__ui-dialog" role="dialog" aria-modal="true" aria-label="iTranslator dialog"><button type="button" class="itarea__ui-close" data-ui-close aria-label="Close">×</button><h2 data-ui-title></h2><p data-ui-message></p><input type="text" data-ui-input hidden><footer><button type="button" data-ui-cancel>Cancel</button><button type="button" class="primary" data-ui-confirm>OK</button></footer></section></div>`;
+}
+
+function createUiDialog(widget) {
+  const overlay = widget.querySelector('[data-ui-dialog]');
+  const title = widget.querySelector('[data-ui-title]');
+  const message = widget.querySelector('[data-ui-message]');
+  const input = widget.querySelector('[data-ui-input]');
+  const cancelButton = widget.querySelector('[data-ui-cancel]');
+  const confirmButton = widget.querySelector('[data-ui-confirm]');
+  const closeButton = widget.querySelector('[data-ui-close]');
+  let finish = null;
+  let kind = 'alert';
+  let returnFocus = null;
+
+  const close = accepted => {
+    if (!finish) return;
+    const resolve = finish;
+    finish = null;
+    overlay.hidden = true;
+    const value = kind === 'prompt' ? (accepted ? input.value : null) : kind === 'confirm' ? accepted : undefined;
+    resolve(value);
+    if (returnFocus?.isConnected) returnFocus.focus();
+  };
+  const show = options => new Promise(resolve => {
+    if (finish) close(false);
+    kind = options.kind || 'alert';
+    finish = resolve;
+    returnFocus = document.activeElement;
+    title.textContent = options.title || (kind === 'alert' ? 'Notice' : 'Please confirm');
+    message.textContent = options.message || '';
+    input.hidden = kind !== 'prompt';
+    input.value = options.value || '';
+    input.setAttribute('aria-label', options.inputLabel || title.textContent);
+    cancelButton.hidden = kind === 'alert';
+    cancelButton.textContent = options.cancelLabel || 'Cancel';
+    confirmButton.textContent = options.confirmLabel || (kind === 'prompt' ? 'Save' : kind === 'confirm' ? 'Continue' : 'OK');
+    confirmButton.classList.toggle('danger', Boolean(options.danger));
+    overlay.hidden = false;
+    queueMicrotask(() => (kind === 'prompt' ? input : confirmButton).focus());
+  });
+  const keydown = event => {
+    if (overlay.hidden) return;
+    if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close(false); }
+    else if (event.key === 'Enter' && (kind !== 'prompt' || document.activeElement === input)) {
+      event.preventDefault(); event.stopPropagation(); close(true);
+    }
+  };
+  confirmButton.addEventListener('click', () => close(true));
+  cancelButton.addEventListener('click', () => close(false));
+  closeButton.addEventListener('click', () => close(false));
+  overlay.addEventListener('click', event => { if (event.target === overlay) close(false); });
+  document.addEventListener('keydown', keydown, true);
+  return {
+    alert: (text, options = {}) => show({ ...options, kind: 'alert', message: text }),
+    confirm: (text, options = {}) => show({ ...options, kind: 'confirm', message: text }),
+    prompt: (text, value = '', options = {}) => show({ ...options, kind: 'prompt', message: text, value }),
+    destroy() { document.removeEventListener('keydown', keydown, true); if (finish) close(false); },
+  };
+}
+
 export class ITranslatorTextarea extends HTMLElement {
   connectedCallback() {
     if (!pageConfig) throw new Error('Call configureITranslator(config) before adding i-translator-textarea elements.');
@@ -118,7 +181,7 @@ export class ITranslatorTextarea extends HTMLElement {
     tagsButton.setAttribute('aria-label', 'Tags');
     tagsButton.innerHTML = tagsIcon;
     autoExpandToggle.insertAdjacentElement('afterend', tagsButton);
-    this.querySelector('.itarea').insertAdjacentHTML('beforeend', tagsDialogMarkup());
+    this.querySelector('.itarea').insertAdjacentHTML('beforeend', `${tagsDialogMarkup()}${uiDialogMarkup()}`);
     settingsPanel.insertAdjacentHTML('beforeend', `<label class="itarea__disable-sequence"><input type="checkbox" data-disable-sequence-enabled> <span>iTrans disable seq.</span><input type="text" data-disable-sequence maxlength="3" size="3" value=" = " aria-label="iTrans disable sequence"></label><div class="itarea__version">iTranslator ${WIDGET_VERSION}<br>Updated ${WIDGET_UPDATED}</div>`);
     const actions = this.querySelector('.itarea__actions');
     this.querySelector('[data-copy]').insertAdjacentHTML('afterend', '<span class="itarea__copy-feedback" data-copy-feedback role="status" aria-live="polite" hidden>Copied</span>');
@@ -139,6 +202,8 @@ export class ITranslatorTextarea extends HTMLElement {
     this.rawBuffer = '';
     this.bufferRange = null;
     this.autoExpand = true;
+    this._contentLastUpdatedAt = null;
+    this._audioLastUpdatedAt = null;
     this._tags = new Map([[DEFAULT_TAG_NAME, DEFAULT_TAG_VALUE]]);
     this.target = pageTarget;
     this.font = pageFont;
@@ -178,9 +243,12 @@ export class ITranslatorTextarea extends HTMLElement {
     this.querySelector('[data-format-size]').value = '24px';
     this.querySelector('[data-format-weight]').value = '600';
     this.setMode('itrans');
+    this.uiDialog = createUiDialog(this);
     this.audioController = createAudioController(this);
     this.documentController = createDocumentController(this, WIDGET_VERSION);
     this.richTextController = createRichTextController(this);
+    this.trackAudioUpdated = () => { this._audioLastUpdatedAt = new Date().toISOString(); };
+    this.addEventListener('audiochange', this.trackAudioUpdated);
     if (this._initialHtml !== undefined) {
       const initialHtml = this._initialHtml;
       delete this._initialHtml;
@@ -330,6 +398,7 @@ export class ITranslatorTextarea extends HTMLElement {
     });
     this.input.addEventListener('keydown', event => this.handleKeydown(event));
     this.input.addEventListener('input', () => {
+      this._contentLastUpdatedAt = new Date().toISOString();
       this.adjustHeight();
       this.scheduleHistoryBoundary();
       this.audioController?.markTextChanged();
@@ -353,6 +422,8 @@ export class ITranslatorTextarea extends HTMLElement {
     this.audioController?.destroy();
     this.documentController?.destroy();
     this.richTextController?.destroy();
+    this.uiDialog?.destroy();
+    this.removeEventListener('audiochange', this.trackAudioUpdated);
     clearTimeout(this.copyFeedbackTimer);
     clearTimeout(this.historyTimer);
   }
@@ -587,10 +658,10 @@ export class ITranslatorTextarea extends HTMLElement {
     this.dispatchEvent(new CustomEvent(duplicate ? 'widgetduplicate' : 'widgetnew', { bubbles: true, detail: { source: this, widget: created } }));
   }
 
-  deleteGeneratedWidget() {
+  async deleteGeneratedWidget() {
     if (!this.hasAttribute('data-itarea-generated')) return;
     const hasContent = Boolean(this.value.trim() || this.audioBlob || this.tags.length > 1);
-    if (hasContent && !window.confirm('Delete this new text area and its unsaved content?')) return;
+    if (hasContent && !await this.uiDialog.confirm('Delete this new text area and its unsaved content?', { title: 'Delete text area?', confirmLabel: 'Delete', danger: true })) return;
     this.remove();
   }
 
@@ -845,6 +916,7 @@ export class ITranslatorTextarea extends HTMLElement {
     }
     this.flushBuffer();
     this.input.textContent = text;
+    this._contentLastUpdatedAt = new Date().toISOString();
     this.clearHistory();
     this.adjustHeight();
     this.audioController?.markTextChanged();
@@ -862,6 +934,7 @@ export class ITranslatorTextarea extends HTMLElement {
     this.flushBuffer();
     if (this.richTextController) this.richTextController.setHtml(html);
     else this.input.innerHTML = sanitizeRichHtml(html);
+    this._contentLastUpdatedAt = new Date().toISOString();
     this.clearHistory();
     this.adjustHeight();
     this.audioController?.markTextChanged();
@@ -871,6 +944,53 @@ export class ITranslatorTextarea extends HTMLElement {
   get audioBlob() { return this.audioController?.blob || null; }
 
   get audioDurationMs() { return this.audioController?.durationMs || 0; }
+
+  _setLastUpdatedTimes({ content, audio } = {}) {
+    this._contentLastUpdatedAt = content || null;
+    this._audioLastUpdatedAt = audio || null;
+  }
+
+  getState() {
+    const label = this.getAttribute('label') || null;
+    const audioId = this.getAttribute('audio-id') || null;
+    const instanceName = this.getAttribute('name') || this.id || audioId || label;
+    return {
+      instanceName,
+      widgetVersion: WIDGET_VERSION,
+      widgetUpdatedAt: WIDGET_UPDATED_ISO,
+      tags: this.tags,
+      content: {
+        text: this.value,
+        html: this.htmlValue,
+        lastUpdatedAt: this._contentLastUpdatedAt,
+      },
+      defaultStyle: {
+        font: this.font,
+        fontSize: this.fontSize,
+        fontWeight: 600,
+      },
+      audio: {
+        blob: this.audioBlob,
+        durationMs: this.audioDurationMs,
+        lastUpdatedAt: this._audioLastUpdatedAt,
+      },
+      layout: {
+        autoExpand: this.autoExpand,
+        heightResizable: true,
+        widthResizable: this.widthResizable,
+      },
+      language: this.target,
+      mode: this.mode,
+      duplicateAudio: this.duplicateAudio,
+      dirty: this.documentController?.dirty ?? Boolean(this.value.trim()),
+      attributes: {
+        id: this.id || null,
+        name: this.getAttribute('name') || null,
+        label,
+        audioId,
+      },
+    };
+  }
 }
 
 customElements.define('i-translator-textarea', ITranslatorTextarea);

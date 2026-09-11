@@ -268,13 +268,14 @@ export function createDocumentController(widget, version) {
     content: {
       text: widget.value,
       html: widget.htmlValue,
+      lastUpdatedAt: widget.getState().content.lastUpdatedAt,
       language: widget.target,
       mode: widget.mode,
       font: widget.font,
       fontSize: Number.parseInt(widget.fontSize, 10),
     },
     metadata: { tags: widget.tags },
-    audio: audio ? { included: true, file: 'audio.wav', mimeType: 'audio/wav', durationMs: audio.durationMs } : { included: false },
+    audio: audio ? { included: true, file: 'audio.wav', mimeType: 'audio/wav', durationMs: audio.durationMs, lastUpdatedAt: widget.getState().audio.lastUpdatedAt } : { included: false, lastUpdatedAt: null },
   });
 
   const save = async() => {
@@ -295,7 +296,7 @@ export function createDocumentController(widget, version) {
         }
       }
       if (!handle) {
-        const entered = window.prompt('Save iTranslator document as:', suggestedName);
+        const entered = await widget.uiDialog.prompt('Enter a filename for this iTranslator document.', suggestedName, { title: 'Save document', inputLabel: 'Document filename', confirmLabel: 'Save' });
         if (entered === null) return;
         filename = safeFilename(entered);
       }
@@ -314,7 +315,7 @@ export function createDocumentController(widget, version) {
       markSaved();
       widget.dispatchEvent(new CustomEvent('documentsave', { bubbles: true, detail: { filename, size: archive.size } }));
     } catch (error) {
-      if (error?.name !== 'AbortError') { showFeedback('Save failed', true); window.alert(`The document could not be saved.\n\n${error.message || error}`); }
+      if (error?.name !== 'AbortError') { showFeedback('Save failed', true); await widget.uiDialog.alert(`The document could not be saved.\n\n${error.message || error}`, { title: 'Save failed' }); }
     } finally { saveButton.disabled = false; }
   };
 
@@ -326,7 +327,7 @@ export function createDocumentController(widget, version) {
       await widget.audioController?.ready;
       if (!widget.supportsTarget(manifest.content.language)) throw new Error(`Unsupported language: ${manifest.content.language}`);
       const hasExisting = Boolean(widget.value.trim() || widget.audioBlob || widget.tags.length > 1);
-      if (hasExisting && !window.confirm('Opening this file will overwrite the existing text, tags, and recorded audio in this text area. Continue?')) { showFeedback('Open cancelled'); return; }
+      if (hasExisting && !await widget.uiDialog.confirm('Opening this file will overwrite the existing text, tags, and recorded audio in this text area. Continue?', { title: 'Replace existing content?', confirmLabel: 'Open document', danger: true })) { showFeedback('Open cancelled'); return; }
       const warnings = [];
       widget.setTarget(manifest.content.language);
       try { widget.setFont(manifest.content.font); }
@@ -338,13 +339,17 @@ export function createDocumentController(widget, version) {
       widget.tags = manifest.metadata?.tags || [{ name: 'type', value: 'rich-text-audio' }];
       if (audio) await widget.audioController.importAudio(audio);
       else await widget.audioController.clearAudio();
+      widget._setLastUpdatedTimes?.({
+        content: manifest.content.lastUpdatedAt || manifest.createdAt || null,
+        audio: audio ? (manifest.audio?.lastUpdatedAt || manifest.createdAt || null) : null,
+      });
       showFeedback('Opened');
       markSaved();
       widget.dispatchEvent(new CustomEvent('documentopen', { bubbles: true, detail: { filename: file.name, manifest } }));
-      if (warnings.length) window.alert(warnings.join('\n'));
+      if (warnings.length) await widget.uiDialog.alert(warnings.join('\n'), { title: 'Document opened with changes' });
     } catch (error) {
       showFeedback('Open failed', true);
-      window.alert(`The document could not be opened.\n\n${error.message || error}`);
+      await widget.uiDialog.alert(`The document could not be opened.\n\n${error.message || error}`, { title: 'Open failed' });
     } finally { openButton.disabled = false; fileInput.value = ''; }
   };
 
@@ -359,6 +364,7 @@ export function createDocumentController(widget, version) {
     open: () => fileInput.click(),
     markDirty,
     markSaved,
+    get dirty() { return dirty; },
     destroy() {
       clearTimeout(feedbackTimer);
       widget.removeEventListener('audiochange', markDirty);

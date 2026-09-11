@@ -28,6 +28,8 @@ export default {
       "script": "Telugu",
       "transform": "script-offset",
       "offset": 768,
+      "tokens": { "e": "ऎ", "E": "ए", "o": "ऒ", "O": "ओ" },
+      "vowelMarks": { "e": "ॆ", "E": "े", "o": "ॊ", "O": "ो" },
       "replacements": { "ॐ": "ఓం" }
     },
     "kannada": {
@@ -35,6 +37,8 @@ export default {
       "script": "Kannada",
       "transform": "script-offset",
       "offset": 896,
+      "tokens": { "e": "ऎ", "E": "ए", "o": "ऒ", "O": "ओ" },
+      "vowelMarks": { "e": "ॆ", "E": "े", "o": "ॊ", "O": "ो" },
       "replacements": { "ॐ": "ॐ" }
     },
     "malayalam": {
@@ -42,17 +46,21 @@ export default {
       "script": "Malayalam",
       "transform": "script-offset",
       "offset": 1024,
+      "tokens": { "e": "ऎ", "E": "ए", "o": "ऒ", "O": "ओ", "Ra": "ऱ" },
+      "vowelMarks": { "e": "ॆ", "E": "े", "o": "ॊ", "O": "ो" },
       "replacements": { "ॐ": "ॐ" }
     },
     "tamil": {
       "label": "Tamil",
       "script": "Tamil",
-      "transform": "tamil"
+      "transform": "tamil",
+      "tokens": { "e": "ऎ", "E": "ए", "o": "ऒ", "O": "ओ", "Ra": "ऱ" },
+      "vowelMarks": { "e": "ॆ", "E": "े", "o": "ॊ", "O": "ो" }
     }
   },
   "tokens": {
     "a": "अ", "A": "आ", "aa": "आ", "i": "इ", "I": "ई", "ii": "ई", "ee": "ई",
-    "u": "उ", "U": "ऊ", "uu": "ऊ", "e": "ए", "ai": "ऐ", "o": "ओ", "au": "औ",
+    "u": "उ", "U": "ऊ", "uu": "ऊ", "e": "ए", "E": "ए", "ai": "ऐ", "o": "ओ", "O": "ओ", "au": "औ",
     "RRi": "ऋ", "R^i": "ऋ", "RRI": "ॠ", "R^I": "ॠ", "LLi": "ऌ", "L^i": "ऌ", "LLI": "ॡ", "L^I": "ॡ",
     "k": "क", "kh": "ख", "g": "ग", "gh": "घ", "~N": "ङ",
     "ch": "च", "Ch": "छ", "j": "ज", "jh": "झ", "~n": "ञ",
@@ -74,7 +82,7 @@ export default {
     "RR": "ॄ"
   },
   "iastTokens": {
-    "a": "a", "A": "ā", "aa": "ā", "i": "i", "I": "ī", "ii": "ī", "ee": "ī", "u": "u", "U": "ū", "uu": "ū", "e": "e", "ai": "ai", "o": "o", "au": "au",
+    "a": "a", "A": "ā", "aa": "ā", "i": "i", "I": "ī", "ii": "ī", "ee": "ī", "u": "u", "U": "ū", "uu": "ū", "e": "e", "E": "ē", "ai": "ai", "o": "o", "O": "ō", "au": "au",
     "R": "ṛ", "RR": "ṝ", "RRi": "ṛ", "R^i": "ṛ", "RRI": "ṝ", "R^I": "ṝ", "LLi": "ḷ", "L^i": "ḷ", "LLI": "ḹ", "L^I": "ḹ",
     "k": "k", "kh": "kh", "g": "g", "gh": "gh", "~N": "ṅ", "ch": "c", "Ch": "ch", "j": "j", "jh": "jh", "~n": "ñ",
     "T": "ṭ", "Th": "ṭh", "D": "ḍ", "Dh": "ḍh", "N": "ṇ", "t": "t", "th": "th", "d": "d", "dh": "dh", "n": "n",

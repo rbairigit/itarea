@@ -278,6 +278,11 @@ warns before overwriting existing widget text or audio. If a saved font is not
 available in the current package, the System default font is used and a warning
 is shown.
 
+Widget warnings, confirmations, filename entry, link entry, and error messages
+use the widget's own accessible dialogs rather than browser-native alerts. Use
+the buttons, press Enter to accept, or press Escape, select ×, or select the
+backdrop to cancel and return focus to the previous control.
+
 The archive is self-contained and uses a versioned manifest. Keep the original
 archive as created by the widget; recompressing its contents with another ZIP
 tool is not supported by this first implementation.
@@ -294,6 +299,28 @@ The existing `widget.value` API continues to read and write plain text. Use
 `widget.htmlValue` when a host page needs the sanitized formatted HTML. The Copy
 control writes both HTML and plain-text clipboard representations when the
 browser supports rich clipboard data.
+
+## Reading complete widget state
+
+Host pages can retrieve a snapshot of the widget's public state with
+`widget.getState()`. The snapshot includes tags, plain and formatted content,
+content/audio update times, default font information, audio data, layout
+choices, language, mode, identifiers, widget version, and the unsaved state.
+
+```js
+const widget = document.querySelector('i-translator-textarea');
+const state = widget.getState();
+
+console.log(state.content.text, state.content.html);
+console.log(state.audio.blob, state.tags);
+console.log(state.dirty);
+```
+
+`dirty` is `true` when the widget has changed since its last successful Save or
+Open, and `false` when it matches that saved/opened checkpoint. The returned
+object is a snapshot; changing its fields does not change the widget. Rich-text
+run-level styles remain represented in `state.content.html`, while
+`state.defaultStyle` describes the widget's baseline font settings.
 
 ## Editing mappings
 
@@ -316,6 +343,33 @@ For each alias, use this rule:
   mode.
 
 After editing the JSON file, reload the page or recreate the widget.
+
+## Customizing the appearance
+
+The widget exposes a documented CSS-variable theme layer. Load a custom
+stylesheet after `itarea.css` and override variables globally, on a containing
+section, or on one `i-translator-textarea`. For example:
+
+```css
+.blue-editors {
+  --itarea-accent: #2457a7;
+  --itarea-accent-hover: #183f7d;
+  --itarea-accent-soft: #e8f0ff;
+  --itarea-border-color: #aebbd0;
+  --itarea-radius: 12px;
+}
+```
+
+See [THEMING.md](THEMING.md) for every supported color, surface, border,
+waveform, typography, spacing, sizing, and corner variable. A copy is included
+in `dist/` so recipients of the standalone package receive the same guide.
+
+For Telugu, Kannada, Tamil, and Malayalam, the widget also supports the newer
+ITRANS/ISO 15919 short-vowel distinction: `e` and `o` produce the short vowels,
+while `E` and `O` produce their long counterparts. The distinction works for
+both independent vowels and vowel signs after consonants. `Ra` produces Tamil
+`ற` and Malayalam `റ`, as defined by the newer mapping table. Sanskrit retains
+its established `e`/`o` behavior for backward compatibility.
 
 ## References
 

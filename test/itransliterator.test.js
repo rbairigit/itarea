@@ -26,6 +26,23 @@ test('creates supported southern Indic scripts', () => {
   assert.equal(createTransliterator(config, 'malayalam')('raamaH'), 'രാമഃ');
   assert.equal(createTransliterator(config, 'tamil')('raamaH'), 'ராமஃ');
 });
+test('distinguishes Dravidian short and long e and o vowels', () => {
+  const cases = {
+    telugu: ['ఎ ఏ ఒ ఓ', 'కె కే కొ కో'],
+    kannada: ['ಎ ಏ ಒ ಓ', 'ಕೆ ಕೇ ಕೊ ಕೋ'],
+    tamil: ['எ ஏ ஒ ஓ', 'கெ கே கொ கோ'],
+    malayalam: ['എ ഏ ഒ ഓ', 'കെ കേ കൊ കോ'],
+  };
+  for (const [target, [independent, combined]] of Object.entries(cases)) {
+    const convert = createTransliterator(config, target);
+    assert.equal(convert('e E o O'), independent, `${target} independent vowels`);
+    assert.equal(convert('ke kE ko kO'), combined, `${target} vowel signs`);
+  }
+});
+test('supports the new Ra mapping where the ITRANS table defines it', () => {
+  assert.equal(createTransliterator(config, 'tamil')('Ra'), 'ற');
+  assert.equal(createTransliterator(config, 'malayalam')('Ra'), 'റ');
+});
 test('forms basic consonant-vowel syllables', () => {
   assert.equal(transliterate('raama'), 'राम');
   assert.equal(transliterate('kakShyaa'), 'कक्ष्या');

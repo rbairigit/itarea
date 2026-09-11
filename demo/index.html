@@ -80,12 +80,26 @@
     <h2>Portable save and open files</h2>
     <p>Reveal the compact controls and use <strong>Save</strong> to create a portable <code>.itarea.zip</code> document. It stores plain Unicode text, sanitized formatted HTML, current mode, selected language, font, font size, tags, and any audio saved in the recorder. The file contains a versioned <code>manifest.json</code> plus an optional normalized <code>audio.wav</code>. Older plain-text widget documents remain openable.</p>
     <p>For page integrations, <code>widget.value</code> remains the plain-text API. Read or assign <code>widget.htmlValue</code> for sanitized formatted HTML. Copy places both formats on the clipboard when supported.</p>
+    <p>Use <code>widget.getState()</code> to retrieve one snapshot containing tags, plain and rich text, content and audio update times, default font information, audio data, resizing options, identifiers, language, mode, widget version, and <code>dirty</code>. A dirty value of <code>true</code> means the widget has unsaved changes; modifying the returned snapshot does not modify the widget.</p>
     <p>Use <strong>Open</strong> to restore the document into any iTranslator Text Area. The archive is validated first, and a confirmation appears before nonempty text or recorded audio is overwritten. If its font is unavailable in the receiving package, the widget uses the System default font and reports that substitution.</p>
+    <p>Confirmations, warnings, filename and link entry, and errors use dialogs matching the widget. Press Escape, select ×, or select outside a dialog to cancel it; focus then returns to the control that opened it.</p>
     <div class="note"><strong>Keep the original file:</strong> this first implementation uses an uncompressed ZIP container so the standalone widget needs no ZIP library. Do not unpack and recompress the archive before reopening it in the widget.</div>
 
     <h2>Configuration and mappings</h2>
     <p>The standalone build embeds its configuration. To change mappings, default languages, or font options, edit <a href="../config/itrans-config.json">config/itrans-config.json</a> and run <code>npm run build</code> again.</p>
     <div class="note"><strong>Supported targets:</strong> Sanskrit, Telugu, Kannada, Tamil, Malayalam, and Roman (IAST). Sanskrit uses Devanagari script. The configuration file is the complete, editable list of ITRANS aliases and script mappings.</div>
+    <p>In Telugu, Kannada, Tamil, and Malayalam, lowercase <code>e</code>/<code>o</code> produce the short vowels and uppercase <code>E</code>/<code>O</code> produce the long vowels. This works for independent vowels and after consonants. The newer <code>Ra</code> mapping produces Tamil <code>ற</code> and Malayalam <code>റ</code>. Sanskrit keeps its established lowercase <code>e</code>/<code>o</code> behavior.</p>
+
+    <h2>Customizing the widget theme</h2>
+    <p>Load your own stylesheet after <code>itarea.css</code> and override the public CSS variables. Apply them to <code>:root</code> for every widget, to a parent container for a group, or directly to one named widget.</p>
+    <pre>.blue-editors {
+  --itarea-accent: #2457a7;
+  --itarea-accent-hover: #183f7d;
+  --itarea-accent-soft: #e8f0ff;
+  --itarea-border-color: #aebbd0;
+  --itarea-radius: 12px;
+}</pre>
+    <p>The theme layer covers interface colors, mode backgrounds, surfaces, borders, dialogs, shadows, audio waveforms, typography, spacing, control dimensions, and corner radii. See <a href="../THEMING.md">THEMING.md</a> for the complete variable reference.</p>
 
     <details>
       <summary>Useful built-in mappings</summary>

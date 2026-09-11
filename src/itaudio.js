@@ -9,7 +9,7 @@ export const audioIcons = {
 };
 
 export function audioDialogMarkup() {
-  return `<div class="itarea__audio-overlay" data-audio-dialog hidden><section class="itarea__audio-dialog" role="dialog" aria-modal="true" aria-label="Record and edit audio"><header><h2>Record and edit audio</h2><button type="button" class="itarea__audio-close" data-audio-close aria-label="Close audio editor">×</button></header><p class="itarea__audio-status" data-audio-status role="status">Ready to record.</p><div class="itarea__audio-recorder"><canvas data-live-waveform width="720" height="86" aria-label="Live recording waveform"></canvas><div class="itarea__audio-record-row"><span data-record-time>0:00 / 5:00</span><button type="button" data-start-recording>${audioIcons.record}<span>Record</span></button><button type="button" data-stop-recording disabled>${audioIcons.stop}<span>Stop</span></button></div></div><div class="itarea__audio-editor" data-audio-editor hidden><audio data-editor-player controls preload="metadata"></audio><canvas data-audio-waveform width="720" height="128" aria-label="Editable audio waveform"></canvas><div class="itarea__audio-readout"><span><strong>Duration:</strong> <span data-audio-duration>0:00</span></span><span><strong>Selection:</strong> <span data-audio-selection>No selection</span></span></div><div class="itarea__audio-tool-grid"><section><h3>Preview</h3><div><button type="button" data-play-audio>Play / Pause</button><button type="button" data-play-selection disabled>Play selection</button></div></section><section><h3>Edit selection</h3><div><button type="button" data-delete-selection disabled>Delete</button><button type="button" data-silence-selection disabled>Silence</button></div></section><section><h3>History</h3><div><button type="button" data-audio-undo disabled>Undo</button><button type="button" data-audio-redo disabled>Redo</button><button type="button" data-audio-reset disabled>Reset</button></div></section><section><h3>Insert silence</h3><label>Seconds <input type="number" data-pause-duration min="0.1" max="10" step="0.1" value="1"></label><div><button type="button" data-insert-silence="start">At start</button><button type="button" data-insert-silence="cursor">At cursor</button><button type="button" data-insert-silence="end">At end</button></div></section></div><footer><button type="button" class="primary" data-save-audio>Save audio</button><a data-download-audio download>Download</a><button type="button" class="danger" data-delete-audio>Delete saved audio</button></footer></div></section></div>`;
+  return `<div class="itarea__audio-overlay" data-audio-dialog hidden><section class="itarea__audio-dialog" role="dialog" aria-modal="true" aria-label="Record and edit audio"><header><h2>Record and edit audio</h2><button type="button" class="itarea__audio-close" data-audio-close aria-label="Close audio editor">×</button></header><p class="itarea__audio-status" data-audio-status role="status">Ready to record.</p><div class="itarea__audio-recorder"><canvas data-live-waveform width="720" height="86" aria-label="Live recording waveform" hidden></canvas><div class="itarea__audio-record-row"><span data-record-time hidden>0:00 / 5:00</span><button type="button" data-start-recording>${audioIcons.record}<span>Record</span></button><button type="button" data-stop-recording disabled hidden>${audioIcons.stop}<span>Stop</span></button></div></div><div class="itarea__audio-editor" data-audio-editor hidden><audio data-editor-player preload="metadata" hidden></audio><canvas data-audio-waveform width="720" height="128" aria-label="Editable audio waveform"></canvas><div class="itarea__audio-readout"><span><strong>Duration:</strong> <span data-audio-duration>0:00</span></span><span><strong>Selection:</strong> <span data-audio-selection>No selection</span></span></div><div class="itarea__audio-tool-grid"><section><h3>Preview</h3><div><button type="button" data-play-audio>Play / Pause</button><button type="button" data-play-selection disabled>Play selection</button></div></section><section><h3>Edit selection</h3><div><button type="button" data-delete-selection disabled>Delete</button><button type="button" data-silence-selection disabled>Silence</button></div></section><section><h3>History</h3><div><button type="button" data-audio-undo disabled>Undo</button><button type="button" data-audio-redo disabled>Redo</button><button type="button" data-audio-reset disabled>Reset</button></div></section><section><h3>Insert silence</h3><label>Seconds <input type="number" data-pause-duration min="0.1" max="10" step="0.1" value="1"></label><div><button type="button" data-insert-silence="start">At start</button><button type="button" data-insert-silence="cursor">At cursor</button><button type="button" data-insert-silence="end">At end</button></div></section></div><footer><button type="button" class="primary" data-save-audio>Save audio</button><a data-download-audio download>Download</a><button type="button" class="danger" data-delete-audio>Delete saved audio</button></footer></div></section></div>`;
 }
 
 function formatTime(seconds, decimals = false) {
@@ -80,10 +80,12 @@ function drawWaveform(canvas, buffer, selection, cursorSeconds) {
   const height = Math.max(1, Math.round((box.height || 128) * ratio));
   if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
   const context = canvas.getContext('2d');
-  context.clearRect(0, 0, width, height); context.fillStyle = '#fff'; context.fillRect(0, 0, width, height);
+  const theme = getComputedStyle(canvas);
+  const color = (name, fallback) => theme.getPropertyValue(name).trim() || fallback;
+  context.clearRect(0, 0, width, height); context.fillStyle = color('--itarea-waveform-background', '#fff'); context.fillRect(0, 0, width, height);
   if (!buffer) return;
   const data = buffer.getChannelData(0); const samplesPerPixel = Math.max(1, Math.floor(data.length / width));
-  context.strokeStyle = '#7a9b8c'; context.lineWidth = Math.max(1, ratio); context.beginPath();
+  context.strokeStyle = color('--itarea-waveform-color', '#7a9b8c'); context.lineWidth = Math.max(1, ratio); context.beginPath();
   for (let x = 0; x < width; x++) {
     let min = 1; let max = -1; const start = x * samplesPerPixel; const finish = Math.min(data.length, start + samplesPerPixel);
     for (let index = start; index < finish; index++) { min = Math.min(min, data[index]); max = Math.max(max, data[index]); }
@@ -92,10 +94,10 @@ function drawWaveform(canvas, buffer, selection, cursorSeconds) {
   context.stroke();
   if (selection) {
     const left = selection.start / buffer.duration * width; const right = selection.end / buffer.duration * width;
-    context.fillStyle = 'rgba(119,75,10,.22)'; context.fillRect(left, 0, Math.max(1, right - left), height);
+    context.fillStyle = color('--itarea-waveform-selection', 'rgba(119,75,10,.22)'); context.fillRect(left, 0, Math.max(1, right - left), height);
   }
   const cursor = Math.max(0, Math.min(width, cursorSeconds / buffer.duration * width));
-  context.strokeStyle = '#774b0a'; context.lineWidth = 2 * ratio; context.beginPath(); context.moveTo(cursor, 0); context.lineTo(cursor, height); context.stroke();
+  context.strokeStyle = color('--itarea-waveform-cursor', '#774b0a'); context.lineWidth = 2 * ratio; context.beginPath(); context.moveTo(cursor, 0); context.lineTo(cursor, height); context.stroke();
 }
 
 function audioExtension(type) {
@@ -124,7 +126,7 @@ export function createAudioController(widget) {
   const download = widget.querySelector('[data-download-audio]');
   let savedBlob = null; let savedDurationMs = 0; let savedText = ''; let savedUrl = null;
   let workingBlob = null; let workingBuffer = null; let originalBuffer = null; let workingUrl = null;
-  let audioContext = null; let selection = null; let cursorSeconds = 0; let selectionEnd = null;
+  let audioContext = null; let selection = null; let cursorSeconds = 0; let selectionEnd = null; let playbackFrame = null;
   let undoStack = []; let redoStack = []; let edited = false;
   let recorder = null; let stream = null; let chunks = []; let recordingStarted = 0; let limitTimer = null; let timerId = null;
   let liveContext = null; let liveAnalyser = null; let liveSource = null; let liveFrame = null; let destroyed = false;
@@ -163,6 +165,35 @@ export function createAudioController(widget) {
     widget.querySelector('[data-audio-reset]').disabled = !edited;
     saveButton.disabled = !workingBlob;
     drawWaveform(waveform, workingBuffer, selection, cursorSeconds);
+  };
+  const stopPlaybackMonitor = () => {
+    if (playbackFrame !== null) cancelAnimationFrame(playbackFrame);
+    playbackFrame = null;
+  };
+  const finishSelectionPlayback = () => {
+    if (selectionEnd === null) return;
+    const end = selectionEnd;
+    selectionEnd = null;
+    try { player.currentTime = end; } catch {}
+    player.pause();
+    stopPlaybackMonitor();
+    cursorSeconds = end;
+    drawWaveform(waveform, workingBuffer, selection, cursorSeconds);
+  };
+  const monitorPlayback = () => {
+    playbackFrame = null;
+    if (destroyed || player.paused || player.ended) return;
+    if (selectionEnd !== null && player.currentTime >= selectionEnd) {
+      finishSelectionPlayback();
+      return;
+    }
+    cursorSeconds = selectionEnd === null ? player.currentTime : Math.min(player.currentTime, selectionEnd);
+    drawWaveform(waveform, workingBuffer, selection, cursorSeconds);
+    playbackFrame = requestAnimationFrame(monitorPlayback);
+  };
+  const startPlaybackMonitor = () => {
+    stopPlaybackMonitor();
+    playbackFrame = requestAnimationFrame(monitorPlayback);
   };
   const decode = async blob => {
     const Context = window.AudioContext || window.webkitAudioContext;
@@ -203,6 +234,7 @@ export function createAudioController(widget) {
   };
   const clearWorking = () => {
     player.pause();
+    stopPlaybackMonitor();
     workingBlob = null; workingBuffer = null; originalBuffer = null;
     selection = null; cursorSeconds = 0; selectionEnd = null;
     undoStack = []; redoStack = []; edited = false;
@@ -220,7 +252,7 @@ export function createAudioController(widget) {
     liveContext = new Context(); await liveContext.resume(); liveAnalyser = liveContext.createAnalyser(); liveAnalyser.fftSize = 1024;
     liveSource = liveContext.createMediaStreamSource(mediaStream); liveSource.connect(liveAnalyser);
     const data = new Uint8Array(liveAnalyser.fftSize); const context = liveCanvas.getContext('2d');
-    const draw = () => { const width = liveCanvas.width; const height = liveCanvas.height; liveAnalyser.getByteTimeDomainData(data); context.clearRect(0, 0, width, height); context.fillStyle = '#fff'; context.fillRect(0, 0, width, height); context.strokeStyle = '#a52720'; context.lineWidth = 2; context.beginPath(); data.forEach((sample, index) => { const x = index / (data.length - 1) * width; const y = sample / 255 * height; index ? context.lineTo(x, y) : context.moveTo(x, y); }); context.stroke(); liveFrame = requestAnimationFrame(draw); };
+    const draw = () => { const width = liveCanvas.width; const height = liveCanvas.height; const theme = getComputedStyle(liveCanvas); const color = (name, fallback) => theme.getPropertyValue(name).trim() || fallback; liveAnalyser.getByteTimeDomainData(data); context.clearRect(0, 0, width, height); context.fillStyle = color('--itarea-waveform-background', '#fff'); context.fillRect(0, 0, width, height); context.strokeStyle = color('--itarea-live-waveform-color', '#a52720'); context.lineWidth = 2; context.beginPath(); data.forEach((sample, index) => { const x = index / (data.length - 1) * width; const y = sample / 255 * height; index ? context.lineTo(x, y) : context.moveTo(x, y); }); context.stroke(); liveFrame = requestAnimationFrame(draw); };
     draw();
   };
   const finishRecording = () => {
@@ -238,17 +270,19 @@ export function createAudioController(widget) {
       recorder.onstop = async() => {
         clearTimeout(limitTimer); clearInterval(timerId); stopLiveWaveform(); stream?.getTracks().forEach(track => track.stop()); stream = null;
         const blob = new Blob(chunks, { type: recorder.mimeType || type || 'audio/webm' });
-        startButton.disabled = false; stopButton.disabled = true; timer.textContent = `${formatTime((performance.now() - recordingStarted) / 1000)} / 5:00`;
+        startButton.disabled = false; startButton.hidden = false; stopButton.disabled = true; stopButton.hidden = true;
+        liveCanvas.hidden = true; timer.hidden = true; timer.textContent = `${formatTime((performance.now() - recordingStarted) / 1000)} / 5:00`;
         try { await loadWorking(blob); } catch (error) { setStatus(error.message || 'The recording could not be decoded.', true); }
         if (activeController === controller) activeController = null;
       };
       recorder.onerror = () => setStatus('The recording could not be completed.', true);
-      recorder.start(250); recordingStarted = performance.now(); startButton.disabled = true; stopButton.disabled = false; editor.hidden = true;
+      recorder.start(250); recordingStarted = performance.now(); startButton.disabled = true; startButton.hidden = true;
+      stopButton.disabled = false; stopButton.hidden = false; liveCanvas.hidden = false; timer.hidden = false; editor.hidden = true;
       setStatus('Recording…');
       try { await startLiveWaveform(stream); } catch { stopLiveWaveform(); }
       timerId = setInterval(() => { timer.textContent = `${formatTime((performance.now() - recordingStarted) / 1000)} / 5:00`; }, 250);
       limitTimer = setTimeout(() => { finishRecording(); setStatus('Recording stopped at the five-minute limit.'); }, AUDIO_MAX_DURATION_MS);
-    } catch (error) { stream?.getTracks().forEach(track => track.stop()); stream = null; startButton.disabled = false; stopButton.disabled = true; setStatus(`Microphone access failed: ${error.message || error.name}`, true); }
+    } catch (error) { stream?.getTracks().forEach(track => track.stop()); stream = null; startButton.disabled = false; startButton.hidden = false; stopButton.disabled = true; stopButton.hidden = true; liveCanvas.hidden = true; timer.hidden = true; setStatus(`Microphone access failed: ${error.message || error.name}`, true); }
   };
   const close = () => {
     if (recorder?.state === 'recording') { finishRecording(); setStatus('Recording stopped. Close again after processing.'); return; }
@@ -284,10 +318,41 @@ export function createAudioController(widget) {
   startButton.addEventListener('click', startRecording); stopButton.addEventListener('click', finishRecording);
   outsideAudio.addEventListener('ended', () => { outsidePlay.innerHTML = audioIcons.play; updateOutside(); });
   outsideAudio.addEventListener('pause', () => { outsidePlay.innerHTML = audioIcons.play; });
-  widget.querySelector('[data-play-audio]').addEventListener('click', () => player.paused ? player.play() : player.pause());
-  widget.querySelector('[data-play-selection]').addEventListener('click', () => { if (!selection) return; player.currentTime = selection.start; selectionEnd = selection.end; player.play(); });
-  player.addEventListener('timeupdate', () => { cursorSeconds = player.currentTime; if (selectionEnd !== null && player.currentTime >= selectionEnd) { player.pause(); selectionEnd = null; } drawWaveform(waveform, workingBuffer, selection, cursorSeconds); });
-  player.addEventListener('ended', () => { selectionEnd = null; });
+  widget.querySelector('[data-play-audio]').addEventListener('click', () => {
+    selectionEnd = null;
+    if (player.paused) player.play().catch(() => {});
+    else player.pause();
+  });
+  widget.querySelector('[data-play-selection]').addEventListener('click', () => {
+    if (!selection) return;
+    stopPlaybackMonitor();
+    selectionEnd = selection.end;
+    player.currentTime = selection.start;
+    cursorSeconds = selection.start;
+    drawWaveform(waveform, workingBuffer, selection, cursorSeconds);
+    if (player.paused) player.play().catch(() => { selectionEnd = null; stopPlaybackMonitor(); });
+    else startPlaybackMonitor();
+  });
+  player.addEventListener('play', startPlaybackMonitor);
+  player.addEventListener('pause', () => {
+    stopPlaybackMonitor();
+    if (selectionEnd !== null) selectionEnd = null;
+    cursorSeconds = player.currentTime;
+    drawWaveform(waveform, workingBuffer, selection, cursorSeconds);
+  });
+  player.addEventListener('timeupdate', () => {
+    if (selectionEnd !== null && player.currentTime >= selectionEnd) {
+      finishSelectionPlayback();
+      return;
+    }
+    cursorSeconds = selectionEnd === null ? player.currentTime : Math.min(player.currentTime, selectionEnd);
+    drawWaveform(waveform, workingBuffer, selection, cursorSeconds);
+  });
+  player.addEventListener('ended', () => {
+    stopPlaybackMonitor(); selectionEnd = null;
+    cursorSeconds = workingBuffer?.duration || player.duration || 0;
+    drawWaveform(waveform, workingBuffer, selection, cursorSeconds);
+  });
   waveform.addEventListener('pointerdown', event => {
     if (!workingBuffer) return; waveform.setPointerCapture(event.pointerId);
     const box = waveform.getBoundingClientRect(); const start = Math.max(0, Math.min(workingBuffer.duration, (event.clientX - box.left) / box.width * workingBuffer.duration));
@@ -340,7 +405,7 @@ export function createAudioController(widget) {
       await removeSaved();
       clearWorking();
     },
-    destroy() { destroyed = true; document.removeEventListener('keydown', escape, true); window.removeEventListener('resize', redraw); finishRecording(); stream?.getTracks().forEach(track => track.stop()); stopLiveWaveform(); player.pause(); outsideAudio.pause(); outsideAudio.removeAttribute('src'); revoke(savedUrl); revoke(workingUrl); audioContext?.close().catch(() => {}); if (activeController === controller) activeController = null; },
+    destroy() { destroyed = true; document.removeEventListener('keydown', escape, true); window.removeEventListener('resize', redraw); finishRecording(); stream?.getTracks().forEach(track => track.stop()); stopLiveWaveform(); stopPlaybackMonitor(); player.pause(); outsideAudio.pause(); outsideAudio.removeAttribute('src'); revoke(savedUrl); revoke(workingUrl); audioContext?.close().catch(() => {}); if (activeController === controller) activeController = null; },
   };
   return controller;
 }
