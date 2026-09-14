@@ -124,9 +124,9 @@ does so and can be opened directly from disk.
 - The transliteration controls also wrap into additional rows within their
   shared border when the widget is narrow. The Expand icon beside Duplicate
   toggles automatic height expansion without opening Settings.
-- The Tags control opens a per-widget metadata editor. Every widget starts with
+- The Tags control shows a small count badge and opens a per-widget metadata editor. Every widget starts with
   the immutable `type=rich-text-audio` tag; additional unique name/value tags
-  can be added, updated, deleted, queried by the containing page, duplicated,
+  can be added, edited directly in the table, deleted, queried by the containing page, duplicated,
   and preserved in `.itarea.zip` documents.
 - Each widget can record up to five minutes of audio and edit it using a
   selectable waveform. The editor supports previewing a selection, deleting or

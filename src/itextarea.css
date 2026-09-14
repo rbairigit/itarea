@@ -93,6 +93,8 @@
 .itarea button.itarea__bar-icon[hidden] { display: none; }
 .itarea button.itarea__bar-icon svg { display: block; width: 21px; height: 21px; fill: currentColor; }
 .itarea button.itarea__bar-icon:hover, .itarea button.itarea__bar-icon:focus-visible { background: var(--itarea-accent-soft); color: var(--itarea-accent-hover); outline: 0; }
+.itarea button.itarea__tags-button { position: relative; overflow: visible; }
+.itarea__tags-count { position: absolute; top: -5px; right: -5px; display: grid; min-width: 14px; height: 14px; place-items: center; padding: 0 2px; border: 1px solid var(--itarea-surface-alt); border-radius: 999px; background: var(--itarea-accent); color: var(--itarea-accent-contrast); font: 700 9px/1 system-ui, sans-serif; }
 .itarea button.itarea__auto-expand-toggle.active { border-color: var(--itarea-accent); background: var(--itarea-accent); color: var(--itarea-accent-contrast); }
 .itarea button.itarea__auto-expand-toggle.active:hover, .itarea button.itarea__auto-expand-toggle.active:focus-visible { background: var(--itarea-accent-hover); color: var(--itarea-accent-contrast); }
 .itarea__tags-overlay { position: fixed; inset: 0; z-index: 35; display: grid; place-items: center; box-sizing: border-box; padding: 1rem; background: var(--itarea-overlay-light-color); }
@@ -117,6 +119,9 @@
 .itarea__tags-table th:last-child, .itarea__tags-table td:last-child { width: 1%; text-align: center; white-space: nowrap; }
 .itarea__tags-table button { padding: .2rem .5rem; font-size: .78rem; }
 .itarea__tags-table button:disabled { cursor: not-allowed; opacity: .38; }
+.itarea__tags-table input { box-sizing: border-box; width: 100%; min-width: 8rem; padding: .3rem .4rem; border: 1px solid transparent; border-radius: .28rem; background: transparent; color: inherit; font: inherit; }
+.itarea__tags-table input:hover { border-color: var(--itarea-table-border-color); }
+.itarea__tags-table input:focus { border-color: var(--itarea-accent); outline: 2px solid color-mix(in srgb, var(--itarea-accent) 25%, transparent); background: var(--itarea-surface-alt); }
 .itarea__ui-overlay { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; box-sizing: border-box; padding: 1rem; background: var(--itarea-overlay-color); }
 .itarea__ui-overlay[hidden] { display: none; }
 .itarea__ui-dialog { position: relative; box-sizing: border-box; width: min(30rem, 100%); max-height: calc(100vh - 2rem); overflow: auto; padding: 1.3rem 1.4rem 1.15rem; border: 1px solid var(--itarea-border-color); border-radius: var(--itarea-radius-large); background: var(--itarea-surface-alt); color: var(--itarea-text-color); box-shadow: 0 18px 55px var(--itarea-shadow-high); }

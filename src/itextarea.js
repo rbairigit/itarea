@@ -179,7 +179,7 @@ export class ITranslatorTextarea extends HTMLElement {
     tagsButton.dataset.tags = '';
     tagsButton.title = 'Tags';
     tagsButton.setAttribute('aria-label', 'Tags');
-    tagsButton.innerHTML = tagsIcon;
+    tagsButton.innerHTML = `${tagsIcon}<span class="itarea__tags-count" data-tags-count aria-hidden="true">1</span>`;
     autoExpandToggle.insertAdjacentElement('afterend', tagsButton);
     this.querySelector('.itarea').insertAdjacentHTML('beforeend', `${tagsDialogMarkup()}${uiDialogMarkup()}`);
     settingsPanel.insertAdjacentHTML('beforeend', `<label class="itarea__disable-sequence"><input type="checkbox" data-disable-sequence-enabled> <span>iTrans disable seq.</span><input type="text" data-disable-sequence maxlength="3" size="3" value=" = " aria-label="iTrans disable sequence"></label><div class="itarea__version">iTranslator ${WIDGET_VERSION}<br>Updated ${WIDGET_UPDATED}</div>`);
@@ -327,9 +327,27 @@ export class ITranslatorTextarea extends HTMLElement {
         message.hidden = false;
       }
     });
-    this.querySelector('[data-tags-body]').addEventListener('click', event => {
+    const tagsBody = this.querySelector('[data-tags-body]');
+    tagsBody.addEventListener('click', event => {
       const button = event.target.closest('[data-tag-delete]');
       if (button) this.removeTag(button.dataset.tagDelete);
+    });
+    tagsBody.addEventListener('change', event => {
+      const field = event.target.closest('[data-tag-name-edit], [data-tag-value-edit]');
+      if (!field) return;
+      const row = field.closest('[data-tag-row]');
+      if (!row) return;
+      const name = row.querySelector('[data-tag-name-edit]')?.value;
+      const value = row.querySelector('[data-tag-value-edit]')?.value;
+      try {
+        this.updateTag(row.dataset.tagRow, name, value);
+        this.querySelector('[data-tags-error]').hidden = true;
+      } catch (error) {
+        const message = this.querySelector('[data-tags-error]');
+        message.textContent = error.message;
+        message.hidden = false;
+        this.renderTags();
+      }
     });
     const applyGlobally = this.querySelector('[data-apply-globally]');
     applyGlobally.addEventListener('change', () => {
@@ -560,17 +578,57 @@ export class ITranslatorTextarea extends HTMLElement {
     return true;
   }
 
+  updateTag(originalName, name, value) {
+    const original = String(originalName ?? '').trim();
+    const cleanName = String(name ?? '').trim();
+    const cleanValue = String(value ?? '').trim();
+    if (!original || original === DEFAULT_TAG_NAME || !this._tags.has(original)) return false;
+    if (!cleanName || !cleanValue) throw new Error('Tag name and value are required.');
+    if (cleanName.length > MAX_TAG_NAME_LENGTH || cleanValue.length > MAX_TAG_VALUE_LENGTH) throw new Error('A tag name or value is too long.');
+    if (cleanName === DEFAULT_TAG_NAME) throw new Error(`The required ${DEFAULT_TAG_NAME} tag cannot be changed.`);
+    if (cleanName !== original && this._tags.has(cleanName)) throw new Error('A tag with that name already exists.');
+    if (cleanName === original && this._tags.get(original) === cleanValue) return false;
+    const next = new Map();
+    for (const [currentName, currentValue] of this._tags) {
+      next.set(currentName === original ? cleanName : currentName, currentName === original ? cleanValue : currentValue);
+    }
+    this._tags = next;
+    this.renderTags();
+    this.notifyTagsChanged();
+    return true;
+  }
+
   renderTags() {
     const body = this.querySelector?.('[data-tags-body]');
     if (!body || !this._tags) return;
     body.replaceChildren();
     for (const [name, value] of this._tags) {
       const row = document.createElement('tr');
+      row.dataset.tagRow = name;
       const nameCell = document.createElement('td');
       const valueCell = document.createElement('td');
       const deleteCell = document.createElement('td');
-      nameCell.textContent = name;
-      valueCell.textContent = value;
+      if (name === DEFAULT_TAG_NAME) {
+        nameCell.textContent = name;
+        valueCell.textContent = value;
+      } else {
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.value = name;
+        nameInput.maxLength = MAX_TAG_NAME_LENGTH;
+        nameInput.autocomplete = 'off';
+        nameInput.dataset.tagNameEdit = '';
+        nameInput.setAttribute('aria-label', `Tag name: ${name}`);
+        const valueInput = document.createElement('input');
+        valueInput.type = 'text';
+        valueInput.value = value;
+        valueInput.maxLength = MAX_TAG_VALUE_LENGTH;
+        valueInput.autocomplete = 'off';
+        valueInput.dataset.tagValueEdit = '';
+        valueInput.setAttribute('aria-label', `Tag value for ${name}`);
+        nameCell.append(nameInput);
+        valueCell.append(valueInput);
+      }
       const button = document.createElement('button');
       button.type = 'button';
       button.textContent = 'Delete';
@@ -580,6 +638,14 @@ export class ITranslatorTextarea extends HTMLElement {
       deleteCell.append(button);
       row.append(nameCell, valueCell, deleteCell);
       body.append(row);
+    }
+    const count = this.querySelector('[data-tags-count]');
+    const tagsButton = this.querySelector('[data-tags]');
+    if (count) count.textContent = String(this._tags.size);
+    if (tagsButton) {
+      const label = `Tags (${this._tags.size})`;
+      tagsButton.title = label;
+      tagsButton.setAttribute('aria-label', label);
     }
   }
 
