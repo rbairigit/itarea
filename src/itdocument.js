@@ -9,7 +9,7 @@ const MAX_DOCUMENT_TAG_NAME_LENGTH = 80;
 const MAX_DOCUMENT_TAG_VALUE_LENGTH = 500;
 
 export const documentIcons = {
-  open: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6h-8l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2Zm0 12H4V8h16v10Zm-5-7-1.4 1.4 1.6 1.6H9v2h6.2l-1.6 1.6L15 19l4-4-4-4Z"/></svg>',
+  open: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6h-8l-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2Zm0 12H4V8h16v10Zm-8.5-8H7v6h4.5v2H7a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2h4.5v2ZM18 11l-2.5 2.5V12H12v-2h3.5V8.5L18 11Zm-2.5.5L18 14v-5l-2.5 2.5Z"/></svg>',
   save: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4Zm2 16H5V5h11.2L19 7.8V19ZM12 18a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-5-8h8V6H7v4Z"/></svg>',
 };
 
